@@ -3,819 +3,417 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reflow — HTML Element Repositioner</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<title>Tooth Marker Position Editor</title>
 <style>
-  :root {
-    --bg: #0d0d10;
-    --surface: #17171c;
-    --surface2: #1f1f26;
-    --surface3: #26262f;
-    --border: #2d2d38;
-    --accent: #00e5ff;
-    --accent-dim: rgba(0,229,255,0.10);
-    --accent2: #ff6b35;
-    --text: #e4e4f0;
-    --text-dim: #6e6e85;
-    --text-mid: #a0a0b8;
-    --success: #00c896;
-    --danger: #ff4757;
-    --warn: #ffc83d;
-  }
-  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: 'Syne', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    user-select: none;
-  }
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#13141f;--panel:#1a1d2e;--surface:#0f1120;
+  --border:#2a2d45;--accent:#6c8eff;--accent2:#1e2240;
+  --text:#d8daf0;--muted:#6b7099;--success:#4caf82;
+  --warn:#f0a04c;--danger:#e05252;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:13px}
 
-  /* ── HEADER ── */
-  header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0 16px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-    gap: 10px;
-  }
-  .logo {
-    font-size: 19px; font-weight: 800; letter-spacing: -0.8px;
-    display: flex; align-items: center; gap: 7px;
-  }
-  .logo-re { color: var(--accent); }
-  .logo-tag {
-    font-size: 9px; font-weight: 600; letter-spacing: 1.5px;
-    text-transform: uppercase; color: var(--text-dim);
-    background: var(--surface2); border: 1px solid var(--border);
-    padding: 2px 7px; border-radius: 4px;
-  }
-  .toolbar { display: flex; gap: 6px; align-items: center; }
-  .btn {
-    background: var(--surface2); border: 1px solid var(--border);
-    color: var(--text); padding: 7px 13px; border-radius: 7px;
-    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
-    cursor: pointer; transition: all 0.13s; display: flex; align-items: center;
-    gap: 5px; white-space: nowrap;
-  }
-  .btn:hover:not(:disabled) { background: var(--surface3); border-color: #3d3d4e; }
-  .btn:active:not(:disabled) { transform: scale(0.96); }
-  .btn.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
-  .btn.primary:hover:not(:disabled) { background: #00cfea; }
-  .btn.warn { background: var(--warn); color: #000; border-color: var(--warn); font-weight: 700; }
-  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
-  .btn svg { width: 13px; height: 13px; fill: currentColor; flex-shrink: 0; }
-  .divider-v { width: 1px; height: 22px; background: var(--border); margin: 0 2px; }
+/* TOP BAR */
+.topbar{background:var(--panel);padding:10px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.logo{font-size:18px}
+.title{font-size:14px;font-weight:600;color:#fff}
+.subtitle{font-size:11px;color:var(--muted);margin-top:1px}
+.status-pill{margin-left:auto;font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:3px 10px;max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-  /* ── MAIN ── */
-  .main {
-    flex: 1; display: grid;
-    grid-template-columns: 1fr 340px;
-    overflow: hidden;
-  }
+/* LAYOUT */
+.main{flex:1;display:flex;overflow:hidden}
 
-  /* ── LEFT PREVIEW ── */
-  .preview-area {
-    display: flex; flex-direction: column; overflow: hidden;
-    position: relative; background: #1a1a20;
-  }
-  .preview-toolbar {
-    background: var(--surface); border-bottom: 1px solid var(--border);
-    padding: 0 14px; height: 36px;
-    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
-  }
-  .preview-toolbar .label { font-size: 10px; color: var(--text-dim); font-weight: 700; letter-spacing: 0.5px; }
-  .file-badge {
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 4px; padding: 2px 8px;
-    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-mid);
-  }
-  .mode-badge {
-    margin-left: auto; font-size: 9px; font-weight: 700; letter-spacing: 1px;
-    text-transform: uppercase; padding: 3px 10px; border-radius: 20px;
-    display: none;
-  }
-  .mode-badge.drag { background: rgba(0,229,255,0.12); border: 1px solid rgba(0,229,255,0.3); color: var(--accent); }
+/* LEFT PANEL */
+.left{width:340px;flex-shrink:0;display:flex;flex-direction:column;background:var(--panel);border-right:1px solid var(--border)}
+.sec{padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sec-label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:7px;font-weight:600}
+.code-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:10px 12px;border-bottom:1px solid var(--border)}
+textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:#b8c4e8;font-family:'SF Mono','Courier New',monospace;font-size:10.5px;padding:8px 10px;resize:none;line-height:1.6;transition:border .15s}
+textarea:focus{outline:none;border-color:var(--accent)}
+textarea::placeholder{color:#3a3f60}
+.code-wrap textarea{flex:1;min-height:0}
+.out-wrap{height:155px;display:flex;flex-direction:column;padding:10px 12px;border-bottom:1px solid var(--border)}
+.out-wrap textarea{flex:1;cursor:default}
 
-  /* Upload zone */
-  .upload-zone {
-    flex: 1; display: flex; align-items: center; justify-content: center;
-    flex-direction: column; gap: 18px; cursor: pointer;
-    transition: all 0.2s; padding: 40px; border: 2px dashed transparent;
-    margin: 20px; border-radius: 14px; text-align: center;
-  }
-  .upload-zone:hover, .upload-zone.drag-over {
-    border-color: var(--accent); background: var(--accent-dim);
-  }
-  .upload-icon { width: 72px; height: 72px; border-radius: 18px; background: var(--surface2); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 32px; transition: all 0.2s; }
-  .upload-zone:hover .upload-icon { border-color: var(--accent); background: var(--accent-dim); }
-  .upload-zone h2 { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; }
-  .upload-zone p { color: var(--text-dim); font-size: 13px; line-height: 1.5; }
-  .upload-hint { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 14px; font-size: 11px; color: var(--text-mid); }
+/* BUTTONS */
+.btn-row{display:flex;gap:6px;flex-wrap:wrap}
+button{padding:6px 12px;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:500;transition:all .13s;white-space:nowrap;font-family:inherit}
+.btn-p{background:var(--accent);color:#fff}
+.btn-p:hover:not(:disabled){filter:brightness(1.15)}
+.btn-s{background:var(--accent2);color:var(--text);border:1px solid var(--border)}
+.btn-s:hover:not(:disabled){border-color:var(--accent);color:#fff}
+.btn-ok{background:var(--success);color:#fff}
+.btn-ok:hover:not(:disabled){filter:brightness(1.1)}
+button:disabled{opacity:.35;cursor:not-allowed}
 
-  /* iframe */
-  .preview-container { flex: 1; position: relative; overflow: hidden; display: none; }
-  .preview-container iframe { width: 100%; height: 100%; border: none; display: block; }
+/* RIGHT PANEL */
+.right{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.pbar{background:var(--panel);border-bottom:1px solid var(--border);padding:7px 12px;display:flex;align-items:center;gap:8px;font-size:12px;flex-shrink:0;min-height:36px}
+.badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:.04em}
+.badge-ok{background:#1a3d2a;color:#4caf82;border:1px solid #2d5e40}
+.badge-warn{background:#3d2e10;color:#f0a04c;border:1px solid #5e4820}
+.badge-blue{background:#1a2040;color:#6c8eff;border:1px solid #2d3560}
+.pwrap{flex:1;position:relative;overflow:hidden}
+#frame{width:100%;height:100%;border:none;background:#f5f0eb;display:none}
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted)}
+.empty-icon{font-size:40px;opacity:.3}
+.empty p{font-size:13px}
+.empty small{font-size:11px;color:#3a3f60}
+.info-bar{padding:5px 12px;background:var(--surface);font-size:11px;color:var(--muted);border-top:1px solid var(--border);flex-shrink:0}
 
-  /* Drag overlay — transparent layer on top of iframe to capture mouse */
-  #dragOverlay {
-    position: absolute; inset: 0; z-index: 10;
-    cursor: default; display: none;
-  }
-  #dragOverlay.active { display: block; }
+/* TOAST */
+.toast{position:fixed;bottom:16px;right:16px;padding:9px 14px;border-radius:7px;font-size:12px;font-weight:500;opacity:0;transform:translateY(8px);transition:all .22s;pointer-events:none;z-index:9999;max-width:260px}
+.toast.show{opacity:1;transform:translateY(0)}
 
-  /* ── RIGHT PANEL ── */
-  .side-panel {
-    background: var(--surface); border-left: 1px solid var(--border);
-    display: flex; flex-direction: column; overflow: hidden;
-  }
-  .panel-block { border-bottom: 1px solid var(--border); padding: 12px 14px; flex-shrink: 0; }
-  .panel-label {
-    font-size: 9px; font-weight: 700; letter-spacing: 1.2px;
-    text-transform: uppercase; color: var(--text-dim); margin-bottom: 9px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .panel-label .badge {
-    background: var(--accent); color: #000; font-size: 10px; font-weight: 800;
-    padding: 1px 6px; border-radius: 10px;
-  }
+/* TIPS PANEL */
+.tips{font-size:11px;color:var(--muted);line-height:1.6;padding:8px 0 0}
+.tips li{padding:1px 0;padding-left:10px;position:relative}
+.tips li::before{content:'·';position:absolute;left:0}
 
-  .steps { display: flex; flex-direction: column; gap: 6px; }
-  .step { display: flex; align-items: flex-start; gap: 9px; font-size: 11px; color: var(--text-mid); line-height: 1.4; }
-  .step-num {
-    width: 18px; height: 18px; border-radius: 50%; background: var(--surface3);
-    border: 1px solid var(--border); font-size: 9px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--accent); flex-shrink: 0;
-  }
-
-  .sel-card {
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 7px;
-    padding: 9px 11px; font-family: 'JetBrains Mono', monospace;
-    font-size: 10.5px; line-height: 1.7;
-  }
-  .sel-tag { color: var(--accent); }
-  .sel-id  { color: var(--accent2); }
-  .sel-cls { color: #a3e635; }
-  .sel-meta { color: var(--text-dim); font-size: 9.5px; }
-
-  .pos-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-  .pos-field label { display: block; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
-  .pos-field input {
-    width: 100%; background: var(--surface2); border: 1px solid var(--border);
-    color: var(--text); padding: 7px 9px; border-radius: 6px;
-    font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500;
-    transition: border-color 0.13s;
-  }
-  .pos-field input:focus { outline: none; border-color: var(--accent); }
-  .pos-field input:disabled { opacity: 0.4; cursor: not-allowed; }
-  .apply-btn { width: 100%; justify-content: center; font-size: 11px; padding: 7px; }
-
-  /* mod list */
-  .mod-list {
-    list-style: none; max-height: 110px; overflow-y: auto;
-    display: flex; flex-direction: column; gap: 4px;
-  }
-  .mod-list::-webkit-scrollbar { width: 4px; }
-  .mod-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-  .mod-item {
-    background: var(--surface2); border-radius: 5px; padding: 6px 10px;
-    font-family: 'JetBrains Mono', monospace; font-size: 10px;
-    color: var(--text-dim); display: flex; align-items: center; gap: 7px;
-  }
-  .mod-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
-  .mod-tag { color: var(--accent); }
-  .mod-pos { color: var(--success); }
-  .empty-hint { text-align: center; color: var(--text-dim); font-size: 11px; padding: 12px 0; }
-
-  /* code */
-  .code-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-  .code-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 9px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
-  }
-  .code-header span { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-dim); }
-  .code-output {
-    flex: 1; overflow: auto; padding: 11px 13px;
-    font-family: 'JetBrains Mono', monospace; font-size: 10px;
-    color: var(--text-dim); line-height: 1.6; white-space: pre; tab-size: 2;
-  }
-  .code-output::-webkit-scrollbar { width: 4px; }
-  .code-output::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
-  .status-bar {
-    height: 25px; background: var(--bg); border-top: 1px solid var(--border);
-    display: flex; align-items: center; padding: 0 14px; gap: 14px; flex-shrink: 0;
-  }
-  .status-bar span { font-size: 10px; color: var(--text-dim); display: flex; align-items: center; gap: 4px; }
-  .status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--success); animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
-
-  .toast {
-    position: fixed; bottom: 32px; left: 50%;
-    transform: translateX(-50%) translateY(14px);
-    background: var(--success); color: #000; padding: 8px 18px;
-    border-radius: 7px; font-weight: 700; font-size: 12px;
-    opacity: 0; transition: all 0.22s ease; pointer-events: none; z-index: 9999;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-  #fileInput { display: none; }
-
-  /* Highlight selected element inside iframe via pointer-events overlay boxes */
-  .el-overlay {
-    position: absolute;
-    pointer-events: none;
-    z-index: 5;
-    box-shadow: 0 0 0 2px var(--accent), 0 0 0 4px rgba(0,229,255,0.15);
-    border-radius: 2px;
-    transition: box-shadow 0.1s;
-  }
-  .el-overlay.hovered {
-    box-shadow: 0 0 0 1px rgba(0,229,255,0.5), 0 0 0 3px rgba(0,229,255,0.08);
-  }
+/* STEP NUMBERS */
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;background:var(--accent);color:#fff;border-radius:50%;font-size:9px;font-weight:700;flex-shrink:0;margin-right:5px}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">
-    <span class="logo-re">re</span><span>flow</span>
-    <span class="logo-tag">HTML Repositioner</span>
+<div class="topbar">
+  <span class="logo">🦷</span>
+  <div>
+    <div class="title">Tooth Marker Position Editor</div>
+    <div class="subtitle">Drag · Reposition · Export</div>
   </div>
-  <div class="toolbar">
-    <label for="fileInput" class="btn">
-      <svg viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5zm7.646-6.354a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L5.354 7.254a.5.5 0 1 1-.708-.708z"/></svg>
-      Upload HTML
-    </label>
-    <div class="divider-v"></div>
-    <button class="btn" id="undoBtn" disabled>
-      <svg viewBox="0 0 16 16"><path d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/></svg>
-      Undo
-    </button>
-    <button class="btn" id="resetBtn" disabled>Reset All</button>
-    <div class="divider-v"></div>
-    <button class="btn" id="downloadBtn" disabled>
-      <svg viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/></svg>
-      Download
-    </button>
-    <button class="btn primary" id="copyBtn" disabled>
-      <svg viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>
-      Copy Code
-    </button>
-  </div>
-</header>
+  <div class="status-pill" id="status">Paste your HTML code to get started</div>
+</div>
 
 <div class="main">
 
-  <!-- LEFT PREVIEW -->
-  <div class="preview-area" id="previewArea">
-    <div class="preview-toolbar">
-      <span class="label">PREVIEW</span>
-      <span class="file-badge" id="fileBadge">No file loaded</span>
-      <span class="mode-badge drag" id="modeBadge">✦ Drag Mode</span>
-    </div>
-
-    <div class="upload-zone" id="uploadZone">
-      <div class="upload-icon">📄</div>
-      <h2>Drop your HTML file here</h2>
-      <p>or click to browse files<br>Supports any .html or .htm file</p>
-      <div class="upload-hint">💡 Works with tooth charts, any HTML with positioned elements</div>
-    </div>
-
-    <div class="preview-container" id="previewContainer">
-      <iframe id="previewFrame" sandbox="allow-scripts allow-same-origin"></iframe>
-      <!-- Transparent drag overlay -->
-      <div id="dragOverlay"></div>
-    </div>
-  </div>
-
-  <!-- RIGHT PANEL -->
-  <div class="side-panel">
-
-    <div class="panel-block">
-      <div class="panel-label">How to use</div>
-      <div class="steps">
-        <div class="step"><div class="step-num">1</div><span>Upload your HTML file</span></div>
-        <div class="step"><div class="step-num">2</div><span>Click any element to select it (cyan outline)</span></div>
-        <div class="step"><div class="step-num">3</div><span>Drag it to the right position</span></div>
-        <div class="step"><div class="step-num">4</div><span>Copy Code or Download the fixed HTML</span></div>
-      </div>
-    </div>
-
-    <div class="panel-block">
-      <div class="panel-label">Selected Element</div>
-      <div class="sel-card" id="selectionInfo">
-        <span style="color:var(--text-dim);font-size:10px">Click any element in the preview…</span>
-      </div>
-    </div>
-
-    <div class="panel-block">
-      <div class="panel-label">Position Override</div>
-      <div class="pos-row">
-        <div class="pos-field">
-          <label>Left (X)</label>
-          <input type="text" id="posLeft" placeholder="e.g. 120px" disabled>
-        </div>
-        <div class="pos-field">
-          <label>Top (Y)</label>
-          <input type="text" id="posTop" placeholder="e.g. 80px" disabled>
-        </div>
-      </div>
-      <button class="btn apply-btn" id="applyPosBtn" disabled>Apply Position</button>
-    </div>
-
-    <div class="panel-block">
-      <div class="panel-label">Changes <span class="badge" id="modBadge">0</span></div>
-      <ul class="mod-list" id="modList">
-        <li class="empty-hint">No changes yet</li>
+  <!-- LEFT -->
+  <div class="left">
+    <div class="sec">
+      <div class="sec-label"><span class="step-num">1</span>Paste HTML code</div>
+      <ul class="tips">
+        <li>Paste your full page HTML (1500–3000 lines is fine)</li>
+        <li>Tooth markers 1–32 are auto-detected</li>
       </ul>
     </div>
-
-    <div class="code-panel">
-      <div class="code-header">
-        <span>Output HTML</span>
-        <button class="btn" id="copyCodeSmall" style="padding:3px 9px;font-size:9px;" disabled>Copy</button>
-      </div>
-      <pre class="code-output" id="codeOutput">Upload a file to see corrected HTML…</pre>
+    <div class="code-wrap">
+      <textarea id="code-in" placeholder="Paste your full HTML here..."></textarea>
     </div>
-
+    <div class="sec">
+      <div class="btn-row">
+        <button class="btn-p" id="load-btn">▶ Load Preview</button>
+        <button class="btn-s" id="clear-btn">✕ Clear</button>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-label"><span class="step-num">2</span>Adjust positions</div>
+      <div class="btn-row">
+        <button class="btn-s" id="hl-btn" disabled>🟠 Highlights ON</button>
+        <button class="btn-s" id="reset-btn" disabled>↺ Reset All</button>
+      </div>
+      <ul class="tips" style="margin-top:8px">
+        <li>Orange outlines = draggable markers</li>
+        <li>Drag any numbered circle to reposition</li>
+        <li>SVG and HTML positioned elements both work</li>
+      </ul>
+    </div>
+    <div class="out-wrap">
+      <div class="sec-label" style="margin-bottom:6px"><span class="step-num">3</span>Export updated code</div>
+      <textarea id="code-out" placeholder="Click Export after repositioning markers..." readonly></textarea>
+    </div>
+    <div class="sec">
+      <div class="btn-row">
+        <button class="btn-s" id="export-btn" disabled>⬇ Export Code</button>
+        <button class="btn-ok" id="copy-btn" disabled>⧉ Copy to Clipboard</button>
+      </div>
+    </div>
   </div>
-</div>
 
-<div class="status-bar">
-  <span><span class="status-dot"></span>Ready</span>
-  <span id="statusMsg">Upload an HTML file to begin</span>
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="pbar" id="pbar">
+      <span style="color:#3a3f60">Preview will appear here after loading</span>
+    </div>
+    <div class="pwrap">
+      <div class="empty" id="empty">
+        <div class="empty-icon">🦷</div>
+        <p>Preview will load here</p>
+        <small>Paste HTML and click <strong style="color:#888">Load Preview</strong></small>
+      </div>
+      <iframe id="frame" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+    </div>
+    <div class="info-bar" id="info">Drag the orange-outlined markers to reposition · Export when done</div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
-<input type="file" id="fileInput" accept=".html,.htm">
 
 <script>
-// ============================================================
-// REFLOW v2 — Fixed drag engine using element-relative coords
-// ============================================================
+// ── Drag script injected into the iframe ────────────────────────────────────
+// Written as a real function so no string-escaping needed
+function _dragScript() {
+  'use strict';
+  var markers = [], dragState = null, hlOn = true;
 
-let originalHTML  = '';
-let currentFile   = null;
-let modifications = new Map(); // elementIndex -> {left, top, origLeft, origTop, origPosition, tag, id, cls}
-let undoStack     = [];
-let selectedEl    = null;  // {idx, tag, id, cls, position, left, top}
-let isDragging    = false;
-let dragStartX    = 0, dragStartY = 0;
-let dragOrigLeft  = 0, dragOrigTop  = 0;
-
-const uploadZone       = document.getElementById('uploadZone');
-const previewContainer = document.getElementById('previewContainer');
-const previewFrame     = document.getElementById('previewFrame');
-const dragOverlay      = document.getElementById('dragOverlay');
-const fileInput        = document.getElementById('fileInput');
-const fileBadge        = document.getElementById('fileBadge');
-const modeBadge        = document.getElementById('modeBadge');
-const codeOutput       = document.getElementById('codeOutput');
-const copyBtn          = document.getElementById('copyBtn');
-const copyCodeSmall    = document.getElementById('copyCodeSmall');
-const downloadBtn      = document.getElementById('downloadBtn');
-const undoBtn          = document.getElementById('undoBtn');
-const resetBtn         = document.getElementById('resetBtn');
-const modList          = document.getElementById('modList');
-const modBadgeEl       = document.getElementById('modBadge');
-const selectionInfo    = document.getElementById('selectionInfo');
-const posLeft          = document.getElementById('posLeft');
-const posTop           = document.getElementById('posTop');
-const applyPosBtn      = document.getElementById('applyPosBtn');
-const statusMsg        = document.getElementById('statusMsg');
-const toast            = document.getElementById('toast');
-
-// ── FILE UPLOAD ───────────────────────────────────────────────
-uploadZone.addEventListener('click', () => fileInput.click());
-fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
-uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
-uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
-uploadZone.addEventListener('drop', e => {
-  e.preventDefault(); uploadZone.classList.remove('drag-over');
-  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-});
-
-function handleFile(file) {
-  if (!file.name.match(/\.html?$/i)) { showToast('⚠ Please upload an .html file', '#ff6b35'); return; }
-  currentFile = file;
-  const reader = new FileReader();
-  reader.onload = e => {
-    originalHTML = e.target.result;
-    modifications.clear(); undoStack = []; selectedEl = null;
-    resetPosPanel();
-    renderPreview(originalHTML);
-    updateModList(); updateCodeOutput(); updateButtons();
-    statusMsg.textContent = `Loaded: ${file.name}`;
-    fileBadge.textContent = file.name;
-    modeBadge.style.display = 'flex';
-  };
-  reader.readAsText(file);
-}
-
-// ── RENDER PREVIEW ───────────────────────────────────────────
-function renderPreview(html) {
-  uploadZone.style.display = 'none';
-  previewContainer.style.display = 'block';
-
-  // Inject minimal script to report element info + freeze links/buttons
-  const injectScript = `
-<script id="__rf__">
-(function(){
-  var rfIdx = 0;
-  window.addEventListener('DOMContentLoaded', function(){
-    var all = document.querySelectorAll('*');
-    all.forEach(function(el, i){ el.setAttribute('data-rfidx', i); });
-  });
-
-  // Block all link navigation & form submit so clicks stay in the tool
-  document.addEventListener('click', function(e){
-    var t = e.target;
-    if (t.tagName === 'A' || t.closest('a')) { e.preventDefault(); e.stopPropagation(); }
-    if (t.tagName === 'BUTTON' || t.tagName === 'INPUT') { e.preventDefault(); }
-  }, true);
-
-  // Report element info on click
-  document.addEventListener('click', function(e){
-    e.preventDefault(); e.stopPropagation();
-    var el = e.target;
-    if (el === document.body || el === document.documentElement) return;
-
-    var cs   = window.getComputedStyle(el);
-    var prect = el.offsetParent ? el.offsetParent.getBoundingClientRect() : {left:0,top:0};
-    var rect  = el.getBoundingClientRect();
-
-    // Current left/top relative to offsetParent
-    var curLeft = parseFloat(el.style.left)  || (cs.left  !== 'auto' ? parseFloat(cs.left)  : 0);
-    var curTop  = parseFloat(el.style.top)   || (cs.top   !== 'auto' ? parseFloat(cs.top)   : 0);
-
-    parent.postMessage({
-      type: 'rfSelect',
-      idx:  parseInt(el.getAttribute('data-rfidx')) || 0,
-      tag:  el.tagName.toLowerCase(),
-      id:   el.id || '',
-      cls:  (el.className || '').toString().trim(),
-      position: cs.position,
-      left: curLeft,
-      top:  curTop,
-      // Rect relative to iframe viewport (for overlay)
-      rectX: rect.left, rectY: rect.top, rectW: rect.width, rectH: rect.height,
-      // parentRect so parent can compute offsetParent-relative coords during drag
-      parentLeft: prect.left, parentTop: prect.top,
-      scrollX: window.scrollX, scrollY: window.scrollY
-    }, '*');
-  }, false);
-
-  // Listen for position updates from parent
-  window.addEventListener('message', function(e){
-    if (!e.data || !e.data.type) return;
-    var d = e.data;
-    if (d.type === 'rfMove'){
-      var el = document.querySelector('[data-rfidx="' + d.idx + '"]');
-      if (!el) return;
-      if (d.position) el.style.position = d.position;
-      el.style.left = d.left + 'px';
-      el.style.top  = d.top  + 'px';
-
-      // Re-report rect for overlay update
-      var rect = el.getBoundingClientRect();
-      parent.postMessage({
-        type: 'rfRect', idx: d.idx,
-        rectX: rect.left, rectY: rect.top, rectW: rect.width, rectH: rect.height
-      }, '*');
-    }
-    if (d.type === 'rfRevert'){
-      var el = document.querySelector('[data-rfidx="' + d.idx + '"]');
-      if (!el) return;
-      el.setAttribute('style', d.style || '');
-    }
-  });
-})();
-<\/script>`;
-
-  let injected = html;
-  if (html.includes('</body>')) {
-    injected = html.replace('</body>', injectScript + '\n</body>');
-  } else {
-    injected = html + injectScript;
-  }
-  previewFrame.srcdoc = injected;
-}
-
-// ── MESSAGES FROM IFRAME ─────────────────────────────────────
-window.addEventListener('message', function(e) {
-  if (!e.data || !e.data.type) return;
-  const d = e.data;
-
-  if (d.type === 'rfSelect') {
-    selectedEl = d;
-    showSelectionInfo(d);
-    posLeft.disabled = false; posTop.disabled = false; applyPosBtn.disabled = false;
-    posLeft.value = Math.round(d.left) + 'px';
-    posTop.value  = Math.round(d.top)  + 'px';
-    // Show overlay box
-    showOverlay(d.rectX, d.rectY, d.rectW, d.rectH);
-    statusMsg.textContent = `Selected: <${d.tag}>${d.id ? ' #'+d.id : ''} (idx ${d.idx}) — drag it now`;
-    dragOverlay.classList.add('active');
-    dragOverlay.style.cursor = 'grab';
-  }
-
-  if (d.type === 'rfRect') {
-    if (selectedEl && d.idx === selectedEl.idx) {
-      showOverlay(d.rectX, d.rectY, d.rectW, d.rectH);
-    }
-  }
-});
-
-// ── OVERLAY (visual highlight over iframe) ───────────────────
-let overlayEl = null;
-function showOverlay(x, y, w, h) {
-  const fr = previewFrame.getBoundingClientRect();
-  if (!overlayEl) {
-    overlayEl = document.createElement('div');
-    overlayEl.className = 'el-overlay';
-    previewContainer.appendChild(overlayEl);
-  }
-  overlayEl.style.cssText = `
-    position:absolute;
-    left:${x}px; top:${y}px;
-    width:${Math.max(w,4)}px; height:${Math.max(h,4)}px;
-    pointer-events:none; z-index:5;
-    box-shadow: 0 0 0 2px #00e5ff, 0 0 0 4px rgba(0,229,255,0.15);
-    border-radius: 2px;
-  `;
-  overlayEl.style.display = 'block';
-}
-function hideOverlay() {
-  if (overlayEl) overlayEl.style.display = 'none';
-}
-
-// ── DRAG LOGIC (from parent, over iframe via transparent overlay) ──
-dragOverlay.addEventListener('mousedown', function(e) {
-  if (!selectedEl) return;
-  isDragging = true;
-  dragStartX = e.clientX;
-  dragStartY = e.clientY;
-  dragOrigLeft = selectedEl.left;
-  dragOrigTop  = selectedEl.top;
-  dragOverlay.style.cursor = 'grabbing';
-  e.preventDefault();
-});
-
-document.addEventListener('mousemove', function(e) {
-  if (!isDragging || !selectedEl) return;
-  const dx = e.clientX - dragStartX;
-  const dy = e.clientY - dragStartY;
-  const newLeft = Math.round(dragOrigLeft + dx);
-  const newTop  = Math.round(dragOrigTop  + dy);
-
-  // Tell iframe to move element
-  const newPos = (selectedEl.position === 'static') ? 'relative' : selectedEl.position;
-  previewFrame.contentWindow.postMessage({
-    type: 'rfMove',
-    idx: selectedEl.idx,
-    left: newLeft, top: newTop,
-    position: newPos
-  }, '*');
-
-  posLeft.value = newLeft + 'px';
-  posTop.value  = newTop  + 'px';
-
-  // Move overlay immediately too (no need to wait for rfRect)
-  if (overlayEl) {
-    const curLeft = parseFloat(overlayEl.style.left) || 0;
-    const curTop  = parseFloat(overlayEl.style.top)  || 0;
-    overlayEl.style.left = (parseFloat(overlayEl.style.left)||0) + (e.movementX) + 'px';
-    overlayEl.style.top  = (parseFloat(overlayEl.style.top)||0)  + (e.movementY) + 'px';
-  }
-});
-
-document.addEventListener('mouseup', function(e) {
-  if (!isDragging || !selectedEl) return;
-  isDragging = false;
-  dragOverlay.style.cursor = 'grab';
-
-  const dx = e.clientX - dragStartX;
-  const dy = e.clientY - dragStartY;
-  if (Math.abs(dx) < 2 && Math.abs(dy) < 2) return; // tiny click, ignore
-
-  const newLeft = Math.round(dragOrigLeft + dx);
-  const newTop  = Math.round(dragOrigTop  + dy);
-  const newPos  = (selectedEl.position === 'static') ? 'relative' : selectedEl.position;
-
-  commitChange(selectedEl.idx, newLeft, newTop, newPos);
-  selectedEl.left = newLeft;
-  selectedEl.top  = newTop;
-  selectedEl.position = newPos;
-
-  statusMsg.textContent = `Moved <${selectedEl.tag}> → (${newLeft}px, ${newTop}px)`;
-});
-
-function commitChange(idx, left, top, position) {
-  const prev = modifications.get(idx);
-  undoStack.push({
-    idx,
-    left:     prev ? prev.left     : left,
-    top:      prev ? prev.top      : top,
-    origLeft: prev ? prev.origLeft : dragOrigLeft,
-    origTop:  prev ? prev.origTop  : dragOrigTop,
-    origPos:  prev ? prev.origPos  : (selectedEl ? selectedEl.position : 'static'),
-    tag: selectedEl ? selectedEl.tag : '',
-    id:  selectedEl ? selectedEl.id  : '',
-    origStyle: prev ? prev.origStyle : ''
-  });
-
-  modifications.set(idx, {
-    left, top, position,
-    origLeft:  modifications.has(idx) ? modifications.get(idx).origLeft : dragOrigLeft,
-    origTop:   modifications.has(idx) ? modifications.get(idx).origTop  : dragOrigTop,
-    origPos:   modifications.has(idx) ? modifications.get(idx).origPos  : (selectedEl ? selectedEl.position : ''),
-    origStyle: modifications.has(idx) ? modifications.get(idx).origStyle : '',
-    tag: selectedEl ? selectedEl.tag : '',
-    id:  selectedEl ? selectedEl.id  : '',
-    cls: selectedEl ? selectedEl.cls : ''
-  });
-
-  updateModList(); updateCodeOutput(); updateButtons();
-}
-
-// ── APPLY MANUAL POSITION ────────────────────────────────────
-applyPosBtn.addEventListener('click', applyManual);
-posLeft.addEventListener('keydown', e => { if (e.key === 'Enter') applyManual(); });
-posTop.addEventListener('keydown',  e => { if (e.key === 'Enter') applyManual(); });
-
-function applyManual() {
-  if (!selectedEl) return;
-  const l = parseFloat(posLeft.value);
-  const t = parseFloat(posTop.value);
-  if (isNaN(l) || isNaN(t)) { showToast('⚠ Enter valid pixel values', '#ff6b35'); return; }
-
-  const newPos = (selectedEl.position === 'static') ? 'relative' : selectedEl.position;
-  previewFrame.contentWindow.postMessage({
-    type: 'rfMove', idx: selectedEl.idx, left: l, top: t, position: newPos
-  }, '*');
-
-  dragOrigLeft = selectedEl.left;
-  dragOrigTop  = selectedEl.top;
-  commitChange(selectedEl.idx, l, t, newPos);
-  selectedEl.left = l; selectedEl.top = t;
-  showToast('✓ Position applied');
-  statusMsg.textContent = `Set <${selectedEl.tag}> → (${l}px, ${t}px)`;
-}
-
-// ── UNDO ─────────────────────────────────────────────────────
-undoBtn.addEventListener('click', doUndo);
-function doUndo() {
-  if (!undoStack.length) return;
-  const u = undoStack.pop();
-  if (modifications.has(u.idx)) {
-    const m = modifications.get(u.idx);
-    // Revert to previous position
-    previewFrame.contentWindow.postMessage({
-      type: 'rfMove', idx: u.idx,
-      left: u.origLeft, top: u.origTop,
-      position: u.origPos || 'static'
-    }, '*');
-    modifications.delete(u.idx);
-  }
-  updateModList(); updateCodeOutput(); updateButtons();
-  showToast('↺ Undone');
-  statusMsg.textContent = `Undid change to <${u.tag}>`;
-}
-
-// ── RESET ────────────────────────────────────────────────────
-resetBtn.addEventListener('click', () => {
-  modifications.clear(); undoStack = []; selectedEl = null;
-  hideOverlay();
-  dragOverlay.classList.remove('active');
-  resetPosPanel();
-  renderPreview(originalHTML);
-  updateModList(); updateCodeOutput(); updateButtons();
-  showToast('↺ All changes reset');
-  statusMsg.textContent = 'Reset complete';
-});
-
-// ── MOD LIST ─────────────────────────────────────────────────
-function updateModList() {
-  modBadgeEl.textContent = modifications.size;
-  if (!modifications.size) {
-    modList.innerHTML = '<li class="empty-hint">No changes yet — drag elements to reposition</li>';
-    return;
-  }
-  modList.innerHTML = '';
-  modifications.forEach((mod, idx) => {
-    const li = document.createElement('li');
-    li.className = 'mod-item';
-    li.innerHTML = `
-      <span class="mod-dot"></span>
-      <span><span class="mod-tag">&lt;${mod.tag}&gt;</span>${mod.id ? ' #'+mod.id : ''} #${idx}
-        → <span class="mod-pos">(${Math.round(mod.left)}px, ${Math.round(mod.top)}px)</span>
-      </span>`;
-    modList.appendChild(li);
-  });
-}
-
-// ── CODE OUTPUT ──────────────────────────────────────────────
-function getModifiedHTML() {
-  if (!originalHTML) return '';
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(originalHTML, 'text/html');
-  const allEls = Array.from(doc.querySelectorAll('*'));
-
-  modifications.forEach((mod, idx) => {
-    if (idx >= allEls.length) return;
-    const el = allEls[idx];
-    const styleStr = el.getAttribute('style') || '';
-    const styleMap = {};
-    styleStr.split(';').forEach(s => {
-      const c = s.indexOf(':');
-      if (c > 0) {
-        const k = s.slice(0,c).trim(); const v = s.slice(c+1).trim();
-        if (k) styleMap[k] = v;
+  function findMarkers() {
+    var found = [], seen = new Set(), all = document.querySelectorAll('*');
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i], tag = el.tagName ? el.tagName.toUpperCase() : '';
+      if (tag === 'HTML' || tag === 'BODY' || tag === 'HEAD' || tag === 'SCRIPT' || tag === 'STYLE') continue;
+      var txt = '';
+      for (var j = 0; j < el.childNodes.length; j++) {
+        if (el.childNodes[j].nodeType === 3) txt += el.childNodes[j].textContent;
       }
-    });
-    styleMap['left'] = Math.round(mod.left) + 'px';
-    styleMap['top']  = Math.round(mod.top)  + 'px';
-    if (!styleMap['position'] || styleMap['position'] === 'static') {
-      styleMap['position'] = mod.position || 'relative';
+      txt = txt.trim();
+      var n = parseInt(txt, 10);
+      if (n >= 1 && n <= 32 && String(n) === txt && !seen.has(el)) {
+        seen.add(el); found.push({ el: el, num: n });
+      }
     }
-    const newStyle = Object.entries(styleMap)
-      .filter(([k,v]) => k && v).map(([k,v]) => `${k}: ${v}`).join('; ');
-    el.setAttribute('style', newStyle);
+    return found;
+  }
+
+  function getDragTarget(el) {
+    var cur = el, inSVG = false;
+    while (cur && cur !== document.documentElement) {
+      if (cur.namespaceURI === 'http://www.w3.org/2000/svg') { inSVG = true; break; }
+      cur = cur.parentElement;
+    }
+    if (inSVG) {
+      cur = el;
+      while (cur && cur !== document.documentElement) {
+        if (cur.tagName && cur.tagName.toLowerCase() === 'g' && cur.getAttribute('transform')) return cur;
+        cur = cur.parentElement;
+      }
+      cur = el;
+      while (cur && cur !== document.documentElement) {
+        if (cur.tagName && cur.tagName.toLowerCase() === 'g') return cur;
+        cur = cur.parentElement;
+      }
+      return el;
+    }
+    cur = el;
+    while (cur && cur !== document.body) {
+      var pos = window.getComputedStyle(cur).position;
+      if (pos === 'absolute' || pos === 'fixed' || pos === 'relative') return cur;
+      cur = cur.parentElement;
+    }
+    return el;
+  }
+
+  function svgScale(el) {
+    var svg = el;
+    while (svg && svg.tagName && svg.tagName.toLowerCase() !== 'svg') svg = svg.parentElement;
+    if (!svg) return { x: 1, y: 1 };
+    var rect = svg.getBoundingClientRect();
+    var vb = svg.viewBox && svg.viewBox.baseVal;
+    if (vb && vb.width && rect.width) return { x: vb.width / rect.width, y: vb.height / rect.height };
+    return { x: 1, y: 1 };
+  }
+
+  function applyMove(target, dx, dy) {
+    if (target.namespaceURI === 'http://www.w3.org/2000/svg') {
+      var t = target.getAttribute('transform') || '';
+      var m = t.match(/translate\(\s*([-\d.]+)[,\s]\s*([-\d.]+)\s*\)/);
+      if (m) {
+        var nx = parseFloat(m[1]) + dx, ny = parseFloat(m[2]) + dy;
+        target.setAttribute('transform', t.replace(/translate\([^)]+\)/, 'translate(' + nx + ' ' + ny + ')'));
+      } else {
+        target.setAttribute('transform', (t ? t + ' ' : '') + 'translate(' + dx + ' ' + dy + ')');
+      }
+    } else {
+      var style = target.style, ct = style.transform || '';
+      var tm = ct.match(/translate\(\s*([-\d.]+)px[,\s]\s*([-\d.]+)px\s*\)/);
+      if (tm) {
+        var nx = parseFloat(tm[1]) + dx, ny = parseFloat(tm[2]) + dy;
+        style.transform = ct.replace(/translate\([^)]+\)/, 'translate(' + nx + 'px,' + ny + 'px)');
+      } else {
+        style.transform = (ct ? ct + ' ' : '') + 'translate(' + dx + 'px,' + dy + 'px)';
+      }
+    }
+  }
+
+  function addHL() { markers.forEach(function(m) { m.el.style.outline = '2.5px solid rgba(255,130,0,0.9)'; m.el.style.outlineOffset = '2px'; m.el.style.cursor = 'grab'; }); }
+  function removeHL() { markers.forEach(function(m) { m.el.style.outline = ''; m.el.style.outlineOffset = ''; m.el.style.cursor = ''; }); }
+
+  document.addEventListener('mousedown', function(e) {
+    var hit = null;
+    for (var i = 0; i < markers.length; i++) {
+      if (markers[i].el === e.target || markers[i].el.contains(e.target)) { hit = markers[i]; break; }
+    }
+    if (!hit) return;
+    e.preventDefault();
+    var tgt = getDragTarget(hit.el);
+    var scale = (tgt.namespaceURI === 'http://www.w3.org/2000/svg') ? svgScale(tgt) : { x: 1, y: 1 };
+    dragState = { target: tgt, sx: e.clientX, sy: e.clientY, scale: scale, num: hit.num };
+    document.body.style.userSelect = 'none';
+    tgt.style.cursor = 'grabbing';
+    window.parent.postMessage({ t: 'ds', n: hit.num }, '*');
   });
 
-  return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+  document.addEventListener('mousemove', function(e) {
+    if (!dragState) return;
+    e.preventDefault();
+    var dx = Math.round((e.clientX - dragState.sx) * dragState.scale.x);
+    var dy = Math.round((e.clientY - dragState.sy) * dragState.scale.y);
+    window.parent.postMessage({ t: 'dm', n: dragState.num, dx: dx, dy: dy }, '*');
+  });
+
+  document.addEventListener('mouseup', function(e) {
+    if (!dragState) return;
+    var dx = (e.clientX - dragState.sx) * dragState.scale.x;
+    var dy = (e.clientY - dragState.sy) * dragState.scale.y;
+    if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) applyMove(dragState.target, dx, dy);
+    dragState.target.style.cursor = 'grab';
+    document.body.style.userSelect = '';
+    dragState = null;
+    window.parent.postMessage({ t: 'du' }, '*');
+  });
+
+  window.addEventListener('message', function(e) {
+    if (!e.data) return;
+    if (e.data.t === 'hl') { hlOn = !hlOn; hlOn ? addHL() : removeHL(); }
+    if (e.data.t === 'export') { window.parent.postMessage({ t: 'html', d: document.documentElement.outerHTML }, '*'); }
+    if (e.data.t === 'reset') { location.reload(); }
+  });
+
+  markers = findMarkers();
+  addHL();
+  window.parent.postMessage({ t: 'ready', count: markers.length }, '*');
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+var $ = function(id) { return document.getElementById(id); };
+var codeIn = $('code-in'), codeOut = $('code-out');
+var loadBtn = $('load-btn'), clearBtn = $('clear-btn');
+var exportBtn = $('export-btn'), copyBtn = $('copy-btn');
+var hlBtn = $('hl-btn'), resetBtn = $('reset-btn');
+var frame = $('frame'), emptyEl = $('empty');
+var statusEl = $('status'), infoEl = $('info'), pbar = $('pbar'), toastEl = $('toast');
+var hlOn = true, loaded = false;
+
+function toast(msg, col) {
+  toastEl.textContent = msg;
+  toastEl.style.background = col || '#2a6e4a';
+  toastEl.style.border = '1px solid ' + (col ? '#0000' : '#3d8a5e');
+  toastEl.style.color = '#fff';
+  toastEl.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(function() { toastEl.classList.remove('show'); }, 2800);
 }
 
-function updateCodeOutput() {
-  codeOutput.textContent = getModifiedHTML() || 'Upload a file to see corrected HTML…';
+function setInfo(t) { infoEl.textContent = t; }
+function setStatus(t) { statusEl.textContent = t; }
+
+function injectAndLoad(html) {
+  var out = html;
+  // Add base tag so relative URLs resolve to the site
+  if (!/<base[\s>]/i.test(out)) {
+    var dm = out.match(/https?:\/\/([a-zA-Z0-9.-]+)/);
+    if (dm) {
+      var root = 'https://' + dm[1] + '/';
+      out = out.replace(/<head[^>]*>/i, function(m) { return m + '<base href="' + root + '">'; });
+    }
+  }
+  // Inject drag script before </body>
+  var scriptBody = ';(' + _dragScript.toString() + ')();';
+  var tag = '<' + 'script>' + scriptBody + '</' + 'script>';
+  if (/<\/body>/i.test(out)) {
+    out = out.replace(/<\/body>/i, tag + '</body>');
+  } else {
+    out = out + tag;
+  }
+  frame.srcdoc = out;
+  emptyEl.style.display = 'none';
+  frame.style.display = 'block';
+  loaded = true;
+  pbar.innerHTML = '<span style="color:#3a3f60;font-size:12px">Loading preview...</span>';
+  setStatus('Loading...');
 }
 
-// ── COPY & DOWNLOAD ──────────────────────────────────────────
-function copyHTML() {
-  const html = getModifiedHTML(); if (!html) return;
-  navigator.clipboard.writeText(html)
-    .then(() => showToast('✓ Copied!'))
-    .catch(() => {
-      const ta = document.createElement('textarea');
-      ta.value = html; document.body.appendChild(ta); ta.select();
-      document.execCommand('copy'); document.body.removeChild(ta);
-      showToast('✓ Copied!');
-    });
-}
-copyBtn.addEventListener('click', copyHTML);
-copyCodeSmall.addEventListener('click', copyHTML);
-
-downloadBtn.addEventListener('click', () => {
-  const html = getModifiedHTML(); if (!html) return;
-  const blob = new Blob([html], { type: 'text/html' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = currentFile ? currentFile.name.replace(/\.html?$/i,'-repositioned.html') : 'repositioned.html';
-  a.click();
-  showToast('✓ Download started!');
+loadBtn.addEventListener('click', function() {
+  var code = codeIn.value.trim();
+  if (!code) { toast('Please paste your HTML code first!', '#8b3030'); return; }
+  injectAndLoad(code);
+  exportBtn.disabled = false;
+  resetBtn.disabled = false;
+  hlBtn.disabled = false;
 });
 
-// ── HELPERS ──────────────────────────────────────────────────
-function updateButtons() {
-  const h = !!originalHTML, m = modifications.size > 0;
-  copyBtn.disabled = copyCodeSmall.disabled = downloadBtn.disabled = resetBtn.disabled = !h;
-  undoBtn.disabled = undoStack.length === 0;
-}
+clearBtn.addEventListener('click', function() {
+  codeIn.value = ''; codeOut.value = '';
+  frame.srcdoc = ''; frame.style.display = 'none';
+  emptyEl.style.display = 'flex';
+  exportBtn.disabled = true; copyBtn.disabled = true;
+  resetBtn.disabled = true; hlBtn.disabled = true;
+  loaded = false; hlOn = true; hlBtn.textContent = '🟠 Highlights ON';
+  setStatus('Paste your HTML code to get started');
+  pbar.innerHTML = '<span style="color:#3a3f60">Preview will appear here after loading</span>';
+});
 
-function resetPosPanel() {
-  posLeft.value = ''; posLeft.disabled = true;
-  posTop.value  = ''; posTop.disabled  = true;
-  applyPosBtn.disabled = true;
-  selectionInfo.innerHTML = '<span style="color:var(--text-dim);font-size:10px">Click any element in the preview…</span>';
-}
+hlBtn.addEventListener('click', function() {
+  hlOn = !hlOn;
+  hlBtn.textContent = hlOn ? '🟠 Highlights ON' : '⬜ Highlights OFF';
+  frame.contentWindow.postMessage({ t: 'hl' }, '*');
+});
 
-function showSelectionInfo(d) {
-  let html = `<span class="sel-tag">&lt;${d.tag}</span>`;
-  if (d.id)  html += ` <span class="sel-id">id="${d.id}"</span>`;
-  if (d.cls) html += ` <span class="sel-cls">class="${d.cls.substring(0,30)}"</span>`;
-  html += `<span class="sel-tag">&gt;</span><br>`;
-  html += `<span class="sel-meta">idx: ${d.idx} · ${d.position} · ${Math.round(d.rectW)}×${Math.round(d.rectH)}px</span>`;
-  selectionInfo.innerHTML = html;
-}
+resetBtn.addEventListener('click', function() {
+  if (!confirm('Reset all marker positions back to original?')) return;
+  frame.contentWindow.postMessage({ t: 'reset' }, '*');
+  codeOut.value = ''; copyBtn.disabled = true;
+  toast('Positions reset to original');
+});
 
-function showToast(msg, color) {
-  toast.textContent = msg;
-  toast.style.background = color || 'var(--success)';
-  toast.style.color = color ? '#fff' : '#000';
-  toast.classList.add('show');
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => toast.classList.remove('show'), 2200);
-}
+exportBtn.addEventListener('click', function() {
+  if (!loaded) return;
+  setStatus('Exporting...');
+  frame.contentWindow.postMessage({ t: 'export' }, '*');
+});
+
+copyBtn.addEventListener('click', function() {
+  if (!codeOut.value) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(codeOut.value).then(function() { toast('Copied to clipboard! ✓'); }).catch(fb);
+  } else { fb(); }
+  function fb() { codeOut.select(); document.execCommand('copy'); toast('Copied!'); }
+});
+
+window.addEventListener('message', function(e) {
+  if (!e.data || !e.data.t) return;
+  var d = e.data;
+
+  if (d.t === 'ready') {
+    var n = d.count;
+    setStatus(n + ' markers detected · ready to drag');
+    pbar.innerHTML =
+      '<span class="badge badge-blue">🦷 Preview</span>' +
+      '<span class="badge ' + (n > 0 ? 'badge-ok' : 'badge-warn') + '">' + n + ' markers</span>' +
+      '<span style="color:#4a5070;font-size:11px">' +
+        (n > 0 ? 'Drag orange-outlined numbers to reposition' : '⚠ No markers found — check your code structure') +
+      '</span>';
+    if (n > 0) toast(n + ' tooth markers ready — drag to reposition');
+    else toast('No markers auto-detected — see note in toolbar', '#7a5020');
+  }
+
+  if (d.t === 'ds') setInfo('Dragging tooth #' + d.n + '...');
+  if (d.t === 'dm') setInfo('Tooth #' + d.n + ' → ' + (d.dx >= 0 ? '+' : '') + d.dx + 'px, ' + (d.dy >= 0 ? '+' : '') + d.dy + 'px');
+  if (d.t === 'du') {
+    setInfo('Position saved · keep dragging or click Export Code when done');
+    setStatus('Positions modified · export when ready');
+  }
+
+  if (d.t === 'html') {
+    var html = d.d;
+    // Strip the injected drag script
+    html = html.replace(/<script>;?\(function _dragScript[\s\S]*?<\/script>/i, '');
+    // Also strip base tag we added (optional — leave it for safety)
+    codeOut.value = html;
+    copyBtn.disabled = false;
+    setStatus('Code exported · ready to copy!');
+    toast('✓ Code exported — click Copy to Clipboard');
+  }
+});
 </script>
 </body>
 </html>
