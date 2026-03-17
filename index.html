@@ -519,17 +519,40 @@ function getDragScript() {
 'use strict';
 var dragging=null, dragMode=true, startMouse={x:0,y:0}, startVal={}, selectedEl=null;
 
-function svgPt(svg,x,y){
-  try{
-    var pt=svg.createSVGPoint(); pt.x=x; pt.y=y;
-    var ctm=svg.getScreenCTM(); if(!ctm) return {x:x,y:y};
+// ── SVG coordinate helpers ──────────────────────────────────────────────────
+// Convert screen (clientX/Y) → SVG viewBox coordinates for ANY svg element,
+// correctly handling viewBox scaling, CSS transforms, and nested SVGs.
+function clientToSVG(svg, clientX, clientY){
+  try {
+    var pt = svg.createSVGPoint();
+    pt.x = clientX; pt.y = clientY;
+    var ctm = svg.getScreenCTM();
+    if (!ctm) throw new Error('no CTM');
     return pt.matrixTransform(ctm.inverse());
-  }catch(e){return{x:x,y:y};}
+  } catch(e) {
+    // Fallback: manual viewBox math
+    var bb = svg.getBoundingClientRect();
+    var vb = svg.viewBox && svg.viewBox.baseVal;
+    if (vb && vb.width && vb.height) {
+      var scaleX = vb.width  / bb.width;
+      var scaleY = vb.height / bb.height;
+      return { x: (clientX - bb.left) * scaleX + vb.x,
+               y: (clientY - bb.top)  * scaleY + vb.y };
+    }
+    return { x: clientX - bb.left, y: clientY - bb.top };
+  }
 }
-function ownerSVG(el){
-  var n=el.parentNode;
-  while(n){if(n.nodeName&&n.nodeName.toLowerCase()==='svg')return n; n=n.parentNode;}
+// Walk up DOM to find the nearest <svg> ancestor
+function nearestSVG(el){
+  var n = el.parentNode;
+  while(n){
+    if(n.nodeName && n.nodeName.toLowerCase()==='svg') return n;
+    n = n.parentNode;
+  }
   return null;
+}
+function getSVGFor(el){
+  return el.ownerSVGElement || nearestSVG(el) || null;
 }
 function parseTr(t){
   if(!t) return{x:0,y:0};
@@ -540,33 +563,31 @@ function parseTr(t){
   return{x:0,y:0};
 }
 function r2(n){return Math.round(n*100)/100;}
+function isSVGEl(el){
+  return !!(el.ownerSVGElement || (el.namespaceURI && el.namespaceURI.indexOf('svg')>-1));
+}
 
+// ── Highlight helpers ───────────────────────────────────────────────────────
 function glow(el,color,id,type){
   el.setAttribute('data-dnd-id',id);
   el.setAttribute('data-dnd-type',type);
   el.setAttribute('data-dnd-color',color);
   el.style.cursor='grab';
-  var isSvg=el.ownerSVGElement||el.nodeName.toLowerCase()==='svg'||
-            (el.namespaceURI&&el.namespaceURI.indexOf('svg')>-1);
-  if(isSvg){
-    el.style.filter='drop-shadow(0 0 5px '+color+') drop-shadow(0 0 2px '+color+')';
-  }else{
-    el.style.outline='2px dashed '+color;
-    el.style.outlineOffset='2px';
+  applyGlow(el,color,false);
+}
+function applyGlow(el,color,selected){
+  var c = selected ? '#fbbf24' : (color||'#38bdf8');
+  var str = selected ? '0 0 12px '+c+', 0 0 4px '+c : '0 0 6px '+c+', 0 0 2px '+c;
+  if(isSVGEl(el)){
+    el.style.filter = 'drop-shadow('+str.split(',')[0]+') drop-shadow('+str.split(',')[1]+')';
+  } else {
+    el.style.outline = (selected?'3px solid ':'2px dashed ')+c;
+    el.style.outlineOffset = '2px';
   }
 }
 function highlight(el,sel){
   var c=el.getAttribute('data-dnd-color')||'#38bdf8';
-  var isSvg=el.ownerSVGElement||el.nodeName.toLowerCase()==='svg'||
-            (el.namespaceURI&&el.namespaceURI.indexOf('svg')>-1);
-  if(sel){
-    if(isSvg) el.style.filter='drop-shadow(0 0 10px #fbbf24) drop-shadow(0 0 4px #fbbf24)';
-    else el.style.outline='3px solid #fbbf24';
-  }else{
-    if(isSvg) el.style.filter='drop-shadow(0 0 5px '+c+') drop-shadow(0 0 2px '+c+')';
-    else el.style.outline='2px dashed '+c;
-    el.style.outlineOffset='2px';
-  }
+  applyGlow(el,c,sel);
 }
 function selectEl(el){
   if(selectedEl&&selectedEl!==el) highlight(selectedEl,false);
@@ -578,44 +599,38 @@ function selectEl(el){
   var info={id:id,tag:el.nodeName,type:type};
   if(type==='circle'){info.cx=el.getAttribute('cx');info.cy=el.getAttribute('cy');info.r=el.getAttribute('r');}
   else if(type==='g'||type==='class-svg'){info.transform=el.getAttribute('transform');}
-  else if(type==='svg-text'){info.x=el.getAttribute('x');info.y=el.getAttribute('y');}
-  else{info.left=el.style.left;info.top=el.style.top;info.cls=el.className;}
+  else if(type==='svg-text'||type==='svg-use'){info.x=el.getAttribute('x');info.y=el.getAttribute('y');}
+  else{info.left=el.style.left;info.top=el.style.top;info.cls=typeof el.className==='string'?el.className:el.className.baseVal||'';}
   window.parent.postMessage({action:'select',info:info},'*');
 }
 
+// ── Setup: find and tag all draggable elements ──────────────────────────────
 function setup(){
   var count=0, seen=new Set();
-  // 1. SVG circles
   document.querySelectorAll('circle').forEach(function(el,i){
     if(seen.has(el))return; seen.add(el);
     glow(el,'#38bdf8','circle-'+i,'circle'); count++;
   });
-  // 2. SVG text labels (numbers 1-32)
   document.querySelectorAll('text').forEach(function(el,i){
     if(seen.has(el))return;
     var t=el.textContent.trim();
     var hasCls=el.className&&el.className.baseVal&&/tooth|number|label|marker|pin/i.test(el.className.baseVal);
     if(t.match(/^\\d{1,2}$/)||hasCls){ seen.add(el); glow(el,'#fbbf24','svgtext-'+i,'svg-text'); count++; }
   });
-  // 3. SVG <use> elements (sometimes used for tooth icons)
   document.querySelectorAll('use[x][y]').forEach(function(el,i){
     if(seen.has(el))return; seen.add(el);
     glow(el,'#fbbf24','use-'+i,'svg-use'); count++;
   });
-  // 4. SVG groups with translate
   document.querySelectorAll('g[transform]').forEach(function(el,i){
     if(seen.has(el))return;
     if(el.getAttribute('transform').indexOf('translate')<0)return;
     if(!el.querySelector('circle,text,path,use'))return;
     seen.add(el); glow(el,'#c084fc','g-'+i,'g'); count++;
   });
-  // 5. class-based elements: tooth, number, marker, pin, dot, label
   document.querySelectorAll('[class*="tooth"],[class*="number"],[class*="marker"],[class*="pin"],[class*="dot"],[class*="label"],[class*="indicator"],[class*="spot"]').forEach(function(el,i){
     if(seen.has(el))return; seen.add(el);
-    var isSvg=el.ownerSVGElement!==null||(el.namespaceURI&&el.namespaceURI.indexOf('svg')>-1);
-    glow(el,'#fbbf24','cls-'+i,isSvg?'class-svg':'class-html'); count++;
+    glow(el,'#fbbf24','cls-'+i,isSVGEl(el)?'class-svg':'class-html'); count++;
   });
-  // 6. Absolutely positioned HTML elements
   document.querySelectorAll('*').forEach(function(el,i){
     if(seen.has(el))return;
     var cs=window.getComputedStyle(el);
@@ -624,99 +639,114 @@ function setup(){
       seen.add(el); glow(el,'#4ade80','abs-'+i,'positioned'); count++;
     }
   });
+  // Block native drag on everything so browser doesn't grab images/SVG
+  document.addEventListener('dragstart',function(e){e.preventDefault();},true);
+  document.body.style.userSelect='none';
+  document.body.style.webkitUserSelect='none';
   window.parent.postMessage({action:'count',count:count},'*');
 }
 
-// MOUSE DOWN
+// ── MOUSEDOWN ───────────────────────────────────────────────────────────────
 document.addEventListener('mousedown',function(e){
-  if(!dragMode)return;
-  var el=e.target;
-  // Walk up to find dnd element
+  if(!dragMode) return;
+  // Find tagged ancestor
   var found=null;
-  for(var n=el;n&&n!==document;n=n.parentNode){
+  for(var n=e.target;n&&n!==document.documentElement;n=n.parentNode){
     if(n.getAttribute&&n.getAttribute('data-dnd-id')){found=n;break;}
   }
-  if(!found)return;
-  e.preventDefault(); e.stopPropagation();
+  if(!found) return;
+  e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
   selectEl(found);
   var type=found.getAttribute('data-dnd-type');
   dragging={el:found,type:type};
+  found.style.cursor='grabbing';
+
   if(type==='circle'||type==='svg-text'||type==='svg-use'){
-    var svg=ownerSVG(found)||found.ownerSVGElement;
-    if(svg){ var p=svgPt(svg,e.clientX,e.clientY); startMouse={x:p.x,y:p.y}; }
-    else startMouse={x:e.clientX,y:e.clientY};
-    if(type==='circle') startVal={cx:parseFloat(found.getAttribute('cx')||0),cy:parseFloat(found.getAttribute('cy')||0)};
-    else if(type==='svg-use') startVal={x:parseFloat(found.getAttribute('x')||0),y:parseFloat(found.getAttribute('y')||0)};
-    else startVal={x:parseFloat(found.getAttribute('x')||0),y:parseFloat(found.getAttribute('y')||0)};
+    var svg=getSVGFor(found);
+    if(svg){
+      var sp=clientToSVG(svg,e.clientX,e.clientY);
+      startMouse={x:sp.x,y:sp.y,svg:svg};
+    } else {
+      startMouse={x:e.clientX,y:e.clientY,svg:null};
+    }
+    if(type==='circle')  startVal={cx:parseFloat(found.getAttribute('cx')||0), cy:parseFloat(found.getAttribute('cy')||0)};
+    else                 startVal={x:parseFloat(found.getAttribute('x')||0),   y:parseFloat(found.getAttribute('y')||0)};
   } else if(type==='g'||type==='class-svg'){
-    var svg2=found.ownerSVGElement||ownerSVG(found);
-    if(svg2){ var p2=svgPt(svg2,e.clientX,e.clientY); startMouse={x:p2.x,y:p2.y}; }
-    else startMouse={x:e.clientX,y:e.clientY};
+    var svg2=getSVGFor(found);
+    if(svg2){
+      var sp2=clientToSVG(svg2,e.clientX,e.clientY);
+      startMouse={x:sp2.x,y:sp2.y,svg:svg2};
+    } else {
+      startMouse={x:e.clientX,y:e.clientY,svg:null};
+    }
     startVal=parseTr(found.getAttribute('transform'));
     startVal.full=found.getAttribute('transform')||'';
   } else {
-    startMouse={x:e.clientX,y:e.clientY};
+    startMouse={x:e.clientX,y:e.clientY,svg:null};
     var cs=window.getComputedStyle(found);
     startVal={left:parseFloat(cs.left)||0, top:parseFloat(cs.top)||0};
   }
-  found.style.cursor='grabbing';
 },true);
 
-// MOUSE MOVE
+// ── MOUSEMOVE ───────────────────────────────────────────────────────────────
 document.addEventListener('mousemove',function(e){
-  if(!dragging)return;
-  e.preventDefault();
+  if(!dragging) return;
+  e.preventDefault(); e.stopPropagation();
   var el=dragging.el, type=dragging.type;
+
   if(type==='circle'){
-    var svg=ownerSVG(el)||el.ownerSVGElement;
-    if(!svg)return;
-    var cur=svgPt(svg,e.clientX,e.clientY);
-    el.setAttribute('cx',r2(startVal.cx+(cur.x-startMouse.x)));
-    el.setAttribute('cy',r2(startVal.cy+(cur.y-startMouse.y)));
+    var svg=startMouse.svg||getSVGFor(el);
+    if(!svg) return;
+    var cur=clientToSVG(svg,e.clientX,e.clientY);
+    el.setAttribute('cx', r2(startVal.cx + (cur.x - startMouse.x)));
+    el.setAttribute('cy', r2(startVal.cy + (cur.y - startMouse.y)));
+
   } else if(type==='svg-text'||type==='svg-use'){
-    var svg=ownerSVG(el)||el.ownerSVGElement;
-    if(!svg)return;
-    var cur=svgPt(svg,e.clientX,e.clientY);
-    el.setAttribute('x',r2(startVal.x+(cur.x-startMouse.x)));
-    el.setAttribute('y',r2(startVal.y+(cur.y-startMouse.y)));
+    var svg=startMouse.svg||getSVGFor(el);
+    if(!svg) return;
+    var cur=clientToSVG(svg,e.clientX,e.clientY);
+    el.setAttribute('x', r2(startVal.x + (cur.x - startMouse.x)));
+    el.setAttribute('y', r2(startVal.y + (cur.y - startMouse.y)));
+
   } else if(type==='g'||type==='class-svg'){
-    var svg2=el.ownerSVGElement||ownerSVG(el);
-    if(svg2){
-      var cur2=svgPt(svg2,e.clientX,e.clientY);
-      var nx=r2(startVal.x+(cur2.x-startMouse.x)), ny=r2(startVal.y+(cur2.y-startMouse.y));
+    if(startMouse.svg){
+      var cur=clientToSVG(startMouse.svg,e.clientX,e.clientY);
+      var nx=r2(startVal.x+(cur.x-startMouse.x)), ny=r2(startVal.y+(cur.y-startMouse.y));
       var newT=startVal.full.replace(/translate\\s*\\([^)]+\\)/,'translate('+nx+','+ny+')');
       if(newT===startVal.full) newT='translate('+nx+','+ny+') '+startVal.full;
       el.setAttribute('transform',newT);
     } else {
-      var dx=e.clientX-startMouse.x, dy=e.clientY-startMouse.y;
-      el.style.left=(startVal.left+dx)+'px'; el.style.top=(startVal.top+dy)+'px';
+      el.style.left=(startVal.left+(e.clientX-startMouse.x))+'px';
+      el.style.top =(startVal.top +(e.clientY-startMouse.y))+'px';
     }
+
   } else {
-    var dx=e.clientX-startMouse.x, dy=e.clientY-startMouse.y;
-    el.style.left=(startVal.left+dx)+'px'; el.style.top=(startVal.top+dy)+'px';
+    el.style.left=(startVal.left+(e.clientX-startMouse.x))+'px';
+    el.style.top =(startVal.top +(e.clientY-startMouse.y))+'px';
   }
 },true);
 
-// MOUSE UP
+// ── MOUSEUP ─────────────────────────────────────────────────────────────────
 document.addEventListener('mouseup',function(e){
-  if(!dragging)return;
+  if(!dragging) return;
   var el=dragging.el, type=dragging.type;
   el.style.cursor='grab';
   var newVals={};
-  if(type==='circle') newVals={cx:el.getAttribute('cx'),cy:el.getAttribute('cy')};
+  if(type==='circle')              newVals={cx:el.getAttribute('cx'),cy:el.getAttribute('cy')};
   else if(type==='svg-text'||type==='svg-use') newVals={x:el.getAttribute('x'),y:el.getAttribute('y')};
-  else if(type==='g'||type==='class-svg') newVals={transform:el.getAttribute('transform')};
-  else newVals={left:el.style.left,top:el.style.top};
+  else if(type==='g'||type==='class-svg')      newVals={transform:el.getAttribute('transform')};
+  else                             newVals={left:el.style.left,top:el.style.top};
   window.parent.postMessage({
     action:'change', id:el.getAttribute('data-dnd-id'),
     type:type, tag:el.nodeName,
-    oldVals:startVal, newVals:newVals,
-    preview:el.outerHTML.substring(0,120)
+    oldVals:JSON.parse(JSON.stringify(startVal)),
+    newVals:newVals
   },'*');
   dragging=null;
 },true);
 
-// PARENT MESSAGES
+// ── MESSAGES FROM PARENT ─────────────────────────────────────────────────────
 window.addEventListener('message',function(e){
   if(!e.data) return;
   var d=e.data;
@@ -724,52 +754,38 @@ window.addEventListener('message',function(e){
     dragMode=d.value;
     document.querySelectorAll('[data-dnd-id]').forEach(function(el){
       var c=el.getAttribute('data-dnd-color')||'#38bdf8';
-      var isSvg=el.ownerSVGElement!==null||(el.namespaceURI&&el.namespaceURI.indexOf('svg')>-1);
-      if(dragMode){
-        el.style.cursor='grab';
-        if(isSvg) el.style.filter='drop-shadow(0 0 5px '+c+') drop-shadow(0 0 2px '+c+')';
-        else{el.style.outline='2px dashed '+c; el.style.outlineOffset='2px';}
-      }else{
-        el.style.cursor='';
-        if(isSvg) el.style.filter='';
-        else{el.style.outline=''; el.style.outlineOffset='';}
-      }
+      if(dragMode){ el.style.cursor='grab'; applyGlow(el,c,false); }
+      else{ el.style.cursor=''; if(isSVGEl(el)) el.style.filter=''; else{el.style.outline='';el.style.outlineOffset='';} }
     });
   }
   if(d.action==='undo'&&d.id){
     var el=document.querySelector('[data-dnd-id="'+d.id+'"]');
-    if(!el)return;
-    var t=el.getAttribute('data-dnd-type');
-    var ov=d.oldVals;
-    if(t==='circle'){el.setAttribute('cx',ov.cx);el.setAttribute('cy',ov.cy);}
-    else if(t==='svg-text'||t==='svg-use'){el.setAttribute('x',ov.x);el.setAttribute('y',ov.y);}
-    else if(t==='g'||t==='class-svg'){el.setAttribute('transform',ov.full||ov.transform||'');}
-    else{el.style.left=ov.left+'px';el.style.top=ov.top+'px';}
+    if(!el) return;
+    var t=el.getAttribute('data-dnd-type'), ov=d.oldVals;
+    if(t==='circle')    { el.setAttribute('cx',ov.cx); el.setAttribute('cy',ov.cy); }
+    else if(t==='svg-text'||t==='svg-use') { el.setAttribute('x',ov.x); el.setAttribute('y',ov.y); }
+    else if(t==='g'||t==='class-svg')      { el.setAttribute('transform',ov.full||ov.transform||''); }
+    else { el.style.left=ov.left+'px'; el.style.top=ov.top+'px'; }
   }
   if(d.action==='exportHTML'){
-    // Clean up before export
     document.querySelectorAll('[data-dnd-id]').forEach(function(el){
-      var c=el.getAttribute('data-dnd-color')||'';
-      el.removeAttribute('data-dnd-id');
-      el.removeAttribute('data-dnd-type');
-      el.removeAttribute('data-dnd-color');
+      el.removeAttribute('data-dnd-id'); el.removeAttribute('data-dnd-type'); el.removeAttribute('data-dnd-color');
       el.style.cursor='';
-      var isSvg=el.ownerSVGElement!==null||(el.namespaceURI&&el.namespaceURI.indexOf('svg')>-1);
-      if(isSvg) el.style.filter='';
-      else{el.style.outline=''; el.style.outlineOffset='';}
+      if(isSVGEl(el)) el.style.filter='';
+      else { el.style.outline=''; el.style.outlineOffset=''; }
     });
-    // Remove injected script tag
     document.querySelectorAll('script').forEach(function(s){
       if(s.textContent&&s.textContent.indexOf('data-dnd-id')>-1) s.remove();
     });
+    document.body.style.userSelect=''; document.body.style.webkitUserSelect='';
     window.parent.postMessage({action:'fullHTML',html:document.documentElement.outerHTML},'*');
   }
 });
 
 // Init
 if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',function(){setTimeout(setup,300);});
-}else{setTimeout(setup,400);}
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(setup,400);});
+} else { setTimeout(setup,500); }
 })();
 <\/script>`;
 }
