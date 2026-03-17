@@ -3,94 +3,83 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PosiEdit — Visual Position Editor</title>
+<title>PosiEdit v3 — Tooth Badge Editor</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:#0e0f11;--surface:#15171a;--surface2:#1c1f23;--border:#2a2d33;--border2:#353940;
-  --text:#e8eaf0;--muted:#6b7280;--accent:#f59e0b;--accent2:#fbbf24;
-  --blue:#3b82f6;--green:#22c55e;--purple:#a78bfa;--red:#f87171;
-}
+:root{--bg:#0e0f11;--surface:#15171a;--surface2:#1c1f23;--border:#2a2d33;--border2:#353940;--text:#e8eaf0;--muted:#6b7280;--accent:#f59e0b;--accent2:#fbbf24;--blue:#3b82f6;--green:#22c55e;--purple:#a78bfa;--red:#f87171;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
 .mono{font-family:'JetBrains Mono',monospace;}
 
-/* TOPBAR */
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;gap:14px;flex-shrink:0;z-index:100;}
-.logo{font-size:18px;font-weight:800;letter-spacing:-0.5px;color:var(--accent);display:flex;align-items:center;gap:8px;}
-.logo-icon{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#000;font-size:14px;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;gap:14px;flex-shrink:0;}
+.logo{font-size:17px;font-weight:800;letter-spacing:-.5px;color:var(--accent);display:flex;align-items:center;gap:8px;}
+.logo-icon{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#000;font-size:13px;}
 .version{font-size:10px;font-weight:600;background:#f59e0b22;color:var(--accent);border:1px solid #f59e0b44;padding:2px 8px;border-radius:4px;letter-spacing:1px;text-transform:uppercase;}
-.status-pill{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.status{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
 .spacer{flex:1;}
-.btn{padding:7px 14px;border-radius:7px;border:1px solid transparent;cursor:pointer;font-size:12px;font-weight:600;font-family:'Syne',sans-serif;letter-spacing:0.3px;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+.btn{padding:7px 14px;border-radius:7px;border:1px solid transparent;cursor:pointer;font-size:12px;font-weight:600;font-family:'Syne',sans-serif;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap;}
 .btn:hover{transform:translateY(-1px);}
 .btn-ghost{background:transparent;color:var(--muted);border-color:var(--border);}
 .btn-ghost:hover{color:var(--text);border-color:var(--border2);background:var(--surface2);}
-.btn-accent{background:var(--accent);color:#000;border-color:var(--accent2);}
+.btn-accent{background:var(--accent);color:#000;}
 .btn-accent:hover{background:var(--accent2);}
+.btn-green{background:#166534;color:#4ade80;border-color:#15803d;}
+.btn-green:hover{background:#15803d;}
 
-/* PASTE SCREEN */
-#paste-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;overflow:auto;}
-.paste-hero{text-align:center;margin-bottom:32px;}
-.paste-hero h1{font-size:40px;font-weight:800;letter-spacing:-2px;background:linear-gradient(135deg,var(--accent),#f97316,var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
-.paste-hero p{color:var(--muted);font-size:14px;line-height:1.7;max-width:520px;margin:0 auto;}
-.steps{display:flex;gap:16px;margin-bottom:24px;align-items:center;}
-.step{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);}
-.step-num{width:22px;height:22px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0;}
-.step-arr{color:var(--border2);}
-textarea#code-input{width:100%;max-width:800px;height:240px;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;color:#c9d1d9;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;padding:16px;resize:vertical;outline:none;transition:border-color .2s,box-shadow .2s;display:block;}
-textarea#code-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px #f59e0b18;}
+/* PASTE */
+#paste-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;overflow:auto;gap:0;}
+.hero{text-align:center;margin-bottom:28px;}
+.hero h1{font-size:38px;font-weight:800;letter-spacing:-2px;background:linear-gradient(135deg,var(--accent),#f97316,var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;}
+.hero p{color:var(--muted);font-size:13px;line-height:1.7;max-width:540px;margin:0 auto;}
+
+.struct-hint{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--purple);border-radius:8px;padding:12px 16px;max-width:760px;width:100%;margin-bottom:20px;font-size:12px;font-family:'JetBrains Mono',monospace;color:#c4b5fd;line-height:1.8;}
+.struct-hint .sh-title{color:var(--accent);font-size:11px;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:6px;font-family:'Syne',sans-serif;}
+
+textarea#code-input{width:100%;max-width:760px;height:220px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;color:#c9d1d9;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.6;padding:14px;resize:vertical;outline:none;transition:border-color .2s;}
+textarea#code-input:focus{border-color:var(--accent);}
 textarea#code-input::placeholder{color:#3d4148;}
-.load-btn{margin-top:16px;width:100%;max-width:800px;padding:14px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.load-btn{margin-top:14px;width:100%;max-width:760px;padding:13px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
 .load-btn:hover{background:var(--accent2);transform:translateY(-2px);box-shadow:0 8px 24px #f59e0b33;}
 
 /* EDITOR */
 #editor-screen{display:none;flex:1;flex-direction:column;overflow:hidden;}
 #editor-screen.active{display:flex;}
-.toolbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:44px;display:flex;align-items:center;gap:12px;flex-shrink:0;overflow-x:auto;}
+.toolbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:44px;display:flex;align-items:center;gap:10px;flex-shrink:0;overflow-x:auto;}
 .toolbar-sep{width:1px;height:22px;background:var(--border);flex-shrink:0;}
-.toolbar-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;}
-.count-badge{background:#3b82f618;border:1px solid #3b82f633;color:var(--blue);font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 10px;border-radius:20px;flex-shrink:0;}
-.change-badge{background:#22c55e18;border:1px solid #22c55e33;color:var(--green);font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 10px;border-radius:20px;flex-shrink:0;}
-.mode-toggle{padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:#22c55e18;color:var(--green);cursor:pointer;font-size:11px;font-weight:600;font-family:'Syne',sans-serif;transition:all .15s;flex-shrink:0;}
-.mode-toggle.off{background:var(--surface2);color:var(--muted);}
+.tlabel{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;}
+.tbadge{font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 10px;border-radius:20px;flex-shrink:0;}
+.tbadge-blue{background:#3b82f618;border:1px solid #3b82f633;color:var(--blue);}
+.tbadge-green{background:#22c55e18;border:1px solid #22c55e33;color:var(--green);}
+.tbadge-purple{background:#a78bfa18;border:1px solid #a78bfa33;color:var(--purple);}
 .zoom-row{display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .zoom-row input[type=range]{width:90px;accent-color:var(--accent);cursor:pointer;}
-.zoom-val{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;min-width:34px;}
+.zlabel{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;min-width:34px;}
 
 .editor-body{flex:1;display:flex;overflow:hidden;}
-.preview-wrap{flex:1;overflow:auto;background:#f0f0eb;position:relative;}
-.preview-scale-outer{transform-origin:top left;transition:transform .2s;}
+.preview-wrap{flex:1;overflow:auto;background:#e8e8e2;position:relative;}
+.scale-outer{transform-origin:top left;transition:transform .2s;}
 #preview-iframe{display:block;width:100%;border:none;min-height:600px;}
 
-/* SIDE PANEL */
-.side-panel{width:272px;min-width:272px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
-.panel-section{border-bottom:1px solid var(--border);padding:14px 16px;}
-.panel-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
-.panel-title span{color:var(--accent);}
-.info-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px;}
-.info-row .lbl{color:var(--muted);}
-.info-row .val{font-family:'JetBrains Mono',monospace;color:var(--text);font-size:11px;}
-.empty-msg{color:var(--muted);font-size:12px;line-height:1.6;text-align:center;padding:8px 0;}
-.smart-badge{display:inline-flex;align-items:center;gap:4px;background:#a78bfa22;border:1px solid #a78bfa44;color:#c4b5fd;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-bottom:8px;letter-spacing:.5px;}
-.change-item{background:var(--surface2);border:1px solid #22c55e22;border-left:3px solid var(--green);border-radius:6px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all .15s;font-size:11px;}
-.change-item:hover{background:#22c55e0a;}
-.change-item .c-id{font-family:'JetBrains Mono',monospace;color:var(--muted);margin-bottom:3px;font-size:10px;}
-.change-item .c-val{color:var(--green);font-family:'JetBrains Mono',monospace;word-break:break-all;}
-.change-item .c-hint{color:#6b7280;font-size:10px;margin-top:2px;}
-.legend-item{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin-bottom:5px;}
-.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+/* SIDE */
+.side-panel{width:280px;min-width:280px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.psec{border-bottom:1px solid var(--border);padding:14px 16px;}
+.psec:last-child{border-bottom:none;flex:1;overflow-y:auto;}
+.ptitle{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;}
+.ptitle span{color:var(--accent);}
+.irow{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-size:12px;}
+.irow .il{color:var(--muted);}.irow .iv{font-family:'JetBrains Mono',monospace;color:var(--text);font-size:11px;}
+.empty-msg{color:var(--muted);font-size:12px;line-height:1.7;text-align:center;padding:6px 0;}
+.chg-item{background:var(--surface2);border:1px solid #22c55e22;border-left:3px solid var(--green);border-radius:6px;padding:7px 10px;margin-bottom:6px;cursor:pointer;font-size:11px;transition:all .15s;}
+.chg-item:hover{background:#22c55e0a;}
+.chg-item .ci{font-family:'JetBrains Mono',monospace;color:var(--muted);font-size:10px;margin-bottom:2px;}
+.chg-item .cv{color:var(--green);font-family:'JetBrains Mono',monospace;}
+.chg-item .ch{color:#6b7280;font-size:10px;margin-top:2px;}
 
-/* LAYER PICKER POPUP */
-.layer-popup{position:fixed;z-index:99999;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:10px;box-shadow:0 12px 40px #000a;min-width:200px;display:none;}
-.layer-popup.show{display:block;}
-.layer-popup-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding:0 4px;}
-.layer-opt{padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text);transition:background .1s;display:flex;align-items:center;gap:8px;}
-.layer-opt:hover{background:var(--surface2);}
-.layer-opt .lo-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.layer-opt .lo-tag{color:var(--muted);font-size:10px;}
+/* SELECTED BOX */
+.sel-box{background:#a78bfa18;border:1px solid #a78bfa44;border-radius:8px;padding:10px 12px;margin-bottom:2px;}
+.sel-title{font-size:11px;font-weight:700;color:#c4b5fd;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.sel-badge{background:#a78bfa33;color:#c4b5fd;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.5px;text-transform:uppercase;}
 
-/* TOAST */
 .toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;transform:translateY(80px);opacity:0;transition:all .25s cubic-bezier(.34,1.56,.64,1);z-index:99999;pointer-events:none;box-shadow:0 8px 32px #0008;}
 .toast.show{transform:translateY(0);opacity:1;}
 .toast.green{background:#14532d;color:#4ade80;border:1px solid #166534;}
@@ -103,456 +92,349 @@ textarea#code-input::placeholder{color:#3d4148;}
 
 <div class="topbar">
   <div class="logo"><div class="logo-icon">✦</div>PosiEdit</div>
-  <div class="version">v2.0 smart</div>
-  <span class="status-pill" id="status-text">Paste HTML → Start Editing</span>
+  <div class="version">v3 · tooth</div>
+  <span class="status" id="status-text">Paste your tooth chart HTML</span>
   <div class="spacer"></div>
   <button class="btn btn-ghost" id="btn-reset" style="display:none" onclick="resetTool()">↩ New Code</button>
-  <button class="btn btn-ghost" id="btn-undo" style="display:none" onclick="undoLast()">⎌ Undo Last</button>
+  <button class="btn btn-ghost" id="btn-undo" style="display:none" onclick="undoLast()">⎌ Undo</button>
   <button class="btn btn-accent" id="btn-copy" style="display:none" onclick="copyCode()">⎘ Copy Fixed Code</button>
 </div>
 
 <!-- PASTE SCREEN -->
 <div id="paste-screen">
-  <div class="paste-hero">
-    <h1>Drag. Fix. Done.</h1>
-    <p>Paste your tooth chart HTML. Smart mode auto-detects layered SVG groups and moves ALL circles/labels together — not just one layer.</p>
+  <div class="hero">
+    <h1>Tooth Badge Fixer</h1>
+    <p>Built specifically for your <code style="background:#ffffff18;padding:2px 6px;border-radius:4px;font-size:12px">&lt;g class="ov-badge"&gt;</code> overlay structure.<br>
+    Click any numbered circle → drag it to the correct position over the tooth.</p>
   </div>
-  <div class="steps">
-    <div class="step"><div class="step-num">1</div>Paste HTML</div>
-    <div class="step-arr">→</div>
-    <div class="step"><div class="step-num">2</div>Click a circle</div>
-    <div class="step-arr">→</div>
-    <div class="step"><div class="step-num">3</div>Drag to reposition</div>
-    <div class="step-arr">→</div>
-    <div class="step"><div class="step-num">4</div>Copy fixed code</div>
+
+  <div class="struct-hint">
+    <div class="sh-title">✓ Detects this exact structure in your code</div>
+    &lt;svg id="tcOverlaySvg" viewBox="0 0 2700 2700"&gt;<br>
+    &nbsp;&nbsp;&lt;g class="<b>ov-badge</b>" data-n="1"&gt;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&lt;circle id="ovc1" <b>cx="400" cy="1256"</b> r="45"/&gt;  ← moves this<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&lt;text <b>x="400" y="1266"</b>&gt;1&lt;/text&gt;             ← and this<br>
+    &nbsp;&nbsp;&lt;/g&gt;<br>
+    &nbsp;&nbsp;... × 32 teeth
   </div>
-  <textarea id="code-input" placeholder="Paste your full HTML code here (1500–3000+ lines is fine)..."></textarea>
-  <button class="load-btn" onclick="loadEditor()"><span style="font-size:18px">⚡</span>Load Smart Editor</button>
+
+  <textarea id="code-input" placeholder="Paste your full tooth chart HTML here...&#10;&#10;The tool will scan for #tcOverlaySvg .ov-badge groups and make them draggable.&#10;Works with your base64 img + overlay SVG structure."></textarea>
+  <button class="load-btn" onclick="loadEditor()">⚡ Load Tooth Badge Editor</button>
 </div>
 
 <!-- EDITOR SCREEN -->
 <div id="editor-screen">
   <div class="toolbar">
-    <span class="toolbar-label">Elements</span>
-    <span class="count-badge" id="drag-count">scanning…</span>
+    <span class="tlabel">Badges</span>
+    <span class="tbadge tbadge-blue" id="badge-count">scanning…</span>
     <div class="toolbar-sep"></div>
-    <span class="toolbar-label">Drag</span>
-    <button class="mode-toggle" id="mode-btn" onclick="toggleMode()">● ON</button>
+    <span class="tlabel">Mode</span>
+    <button class="tbadge tbadge-green" id="mode-btn" style="cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;border:none;" onclick="toggleMode()">● DRAG ON</button>
     <div class="toolbar-sep"></div>
     <div class="zoom-row">
-      <span class="toolbar-label">Zoom</span>
-      <input type="range" min="25" max="150" value="100" id="zoom-slider" oninput="setZoom(this.value)">
-      <span class="zoom-val" id="zoom-label">100%</span>
+      <span class="tlabel">Zoom</span>
+      <input type="range" min="30" max="150" value="100" id="zoom-slider" oninput="setZoom(this.value)">
+      <span class="zlabel" id="zoom-label">100%</span>
     </div>
     <div class="toolbar-sep"></div>
-    <span class="change-badge" id="change-badge" style="display:none"></span>
+    <span class="tbadge tbadge-green" id="chg-badge" style="display:none"></span>
   </div>
 
   <div class="editor-body">
     <div class="preview-wrap" id="preview-wrap">
-      <div class="preview-scale-outer" id="scale-outer">
+      <div class="scale-outer" id="scale-outer">
         <iframe id="preview-iframe" scrolling="auto" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
       </div>
     </div>
 
     <div class="side-panel">
-      <div class="panel-section">
-        <div class="panel-title">Selected</div>
-        <div id="selected-info"><div class="empty-msg">Click any glowing element.<br><br>Smart mode will grab the whole group — not just one layer.</div></div>
+      <div class="psec">
+        <div class="ptitle">Selected Badge</div>
+        <div id="sel-info"><div class="empty-msg">Click any numbered circle<br>to select and drag it.</div></div>
       </div>
-      <div class="panel-section" style="flex:1;overflow-y:auto">
-        <div class="panel-title">Changes <span id="changes-count"></span></div>
-        <div id="changes-list"><div class="empty-msg">No changes yet.</div></div>
-        <div style="margin-top:20px">
-          <div class="panel-title">Color Guide</div>
-          <div class="legend-item"><div class="leg-dot" style="background:#c084fc"></div>⭐ Smart group (all layers)</div>
-          <div class="legend-item"><div class="leg-dot" style="background:#38bdf8"></div>SVG circle (cx/cy only)</div>
-          <div class="legend-item"><div class="leg-dot" style="background:#fbbf24"></div>Text / number label</div>
-          <div class="legend-item"><div class="leg-dot" style="background:#4ade80"></div>HTML positioned element</div>
-        </div>
+      <div class="psec" style="flex:1;overflow-y:auto">
+        <div class="ptitle">Changes <span id="chg-count"></span></div>
+        <div id="chg-list"><div class="empty-msg">No changes yet.<br>Drag badges to reposition.</div></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Layer picker popup -->
-<div class="layer-popup" id="layer-popup">
-  <div class="layer-popup-title">Multiple layers — pick one:</div>
-  <div id="layer-opts"></div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script>
-let originalCode='', changes={}, dragMode=true;
+let originalCode='', changes={}, dragModeOn=true;
 
 function toast(msg,type='green'){
   const el=document.getElementById('toast');
-  el.className='toast '+type; el.textContent=msg; el.classList.add('show');
+  el.className='toast '+type;el.textContent=msg;el.classList.add('show');
   setTimeout(()=>el.classList.remove('show'),2800);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// THE SMART DRAG SCRIPT — injected into iframe
-// Key insight: always prefer moving a <g transform="translate"> parent
-// so ALL layers (circles, text, rings) move together as one unit
+// INJECTED SCRIPT — runs inside the iframe
+// Targets specifically: #tcOverlaySvg .ov-badge groups
+// Each group has: <circle cx cy> + <text x y> — moves BOTH by same delta
+// Coordinate system: SVG viewBox (0 0 2700 2700) → must convert from screen px
 // ─────────────────────────────────────────────────────────────────────────────
 function getDragScript(){
-return `<script>
+return `<script id="posiedit-script">
 (function(){
 'use strict';
-var dragging=null,dragMode=true,startMouse={},startVal={},selEl=null;
+var dm=true, drag=null, startSVG={}, startCircle={}, selG=null;
 
-/* ── coords ── */
-function svgCoords(svg,cx,cy){
+// Convert screen clientX/Y → SVG viewBox coordinates
+// Works with any viewBox size, any CSS scaling, any devicePixelRatio
+function toSVG(svg, cx, cy){
   try{
-    var pt=svg.createSVGPoint(); pt.x=cx; pt.y=cy;
-    var m=svg.getScreenCTM(); if(!m) throw 1;
-    return pt.matrixTransform(m.inverse());
+    var pt=svg.createSVGPoint();
+    pt.x=cx; pt.y=cy;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
   }catch(e){
-    var b=svg.getBoundingClientRect(), vb=svg.viewBox&&svg.viewBox.baseVal;
-    if(vb&&vb.width&&vb.height) return{x:(cx-b.left)*vb.width/b.width+vb.x, y:(cy-b.top)*vb.height/b.height+vb.y};
-    return{x:cx-b.left,y:cy-b.top};
+    // Manual fallback
+    var b=svg.getBoundingClientRect();
+    var v=svg.viewBox.baseVal;
+    return{x:(cx-b.left)/b.width*v.width+v.x, y:(cy-b.top)/b.height*v.height+v.y};
   }
 }
-function rootSVG(el){
-  var n=el; while(n){if(n.nodeName&&n.nodeName.toLowerCase()==='svg')return n; n=n.parentNode;} return null;
-}
-function parseTr(t){
-  if(!t)return{x:0,y:0,raw:''};
-  var m=t.match(/translate\\s*\\(\\s*([\\-\\d\\.e]+)[,\\s]+([\\-\\d\\.e]+)/i);
-  if(m)return{x:parseFloat(m[1]),y:parseFloat(m[2]),raw:t};
-  var m2=t.match(/translate\\s*\\(\\s*([\\-\\d\\.e]+)\\s*\\)/i);
-  if(m2)return{x:parseFloat(m2[1]),y:0,raw:t};
-  return{x:0,y:0,raw:t};
-}
-function r2(n){return Math.round(n*100)/100;}
-function isSvg(el){return !!(el.ownerSVGElement||(el.namespaceURI&&el.namespaceURI.indexOf('svg')>-1));}
 
-/* ── SMART target picker ──────────────────────────────────────────────────────
-   Walk UP from clicked element. Prefer the nearest <g> ancestor that:
-   1. Has transform="translate(...)"
-   2. Contains at least 1 circle/text/path child (it's a real marker group)
-   This ensures ALL layers inside the group move together.
-   Only fall back to the raw element if no such group is found.
-*/
-function smartTarget(el){
-  var n=el;
-  while(n&&n!==document.documentElement){
-    if(n.nodeName&&n.nodeName.toLowerCase()==='g'){
-      var tr=n.getAttribute('transform');
-      if(tr&&tr.indexOf('translate')>-1){
-        // Make sure it's a real marker group (has circle/text children)
-        if(n.querySelector('circle,text,path,use,ellipse')){
-          return{el:n,type:'smart-group',smart:true};
-        }
-      }
-    }
-    n=n.parentNode;
-  }
-  // No group found — fall back to individual element
-  return{el:el,type:isSvg(el)?'circle-solo':'html-el',smart:false};
-}
+function r1(n){return Math.round(n);}  // integers look cleaner in code
 
-/* ── glow helpers ── */
-function glowEl(el,color,sel){
-  if(isSvg(el)){
-    var c=sel?'#fbbf24':(color||'#c084fc');
-    el.style.filter='drop-shadow(0 0 '+(sel?'10':'5')+'px '+c+') drop-shadow(0 0 '+(sel?'4':'2')+'px '+c+')';
+// ── Glow helpers ──
+function glow(g,sel){
+  var c=g.querySelector('circle');
+  if(!c)return;
+  if(sel){
+    c.setAttribute('stroke','#fbbf24');
+    c.setAttribute('stroke-width','8');
+    c.setAttribute('fill','#1E4D2B');
   }else{
-    el.style.outline=(sel?'3px solid ':'2px dashed ')+(sel?'#fbbf24':(color||'#4ade80'));
-    el.style.outlineOffset='2px';
+    c.removeAttribute('stroke');
+    c.removeAttribute('stroke-width');
+    c.setAttribute('fill','rgba(110,130,205,0.88)');
   }
 }
-function unGlow(el){
-  if(isSvg(el)) el.style.filter='';
-  else{el.style.outline='';el.style.outlineOffset='';}
+function idleGlow(g){
+  var c=g.querySelector('circle');
+  if(!c)return;
+  c.setAttribute('stroke','#a78bfa');
+  c.setAttribute('stroke-width','4');
+}
+function unGlow(g){
+  var c=g.querySelector('circle');
+  if(!c)return;
+  c.removeAttribute('stroke');
+  c.removeAttribute('stroke-width');
+  c.setAttribute('fill','rgba(110,130,205,0.88)');
 }
 
-/* ── Setup: just add grab cursor + light glow to all marker candidates ── */
+// ── Find the overlay SVG ──
+function getOverlaySVG(){
+  return document.getElementById('tcOverlaySvg') ||
+         document.querySelector('svg[viewBox*="2700"]') ||
+         document.querySelector('svg[style*="position:absolute"]') ||
+         document.querySelector('svg[style*="position: absolute"]');
+}
+
+// ── Setup ──
 function setup(){
-  var count=0, tagged=new Set();
+  var svg=getOverlaySVG();
+  if(!svg){ window.parent.postMessage({action:'count',count:0,error:'overlay SVG not found'},'*'); return; }
 
-  // Priority 1: <g transform="translate"> groups containing circles/text = marker groups
-  document.querySelectorAll('g[transform]').forEach(function(g,i){
-    var tr=g.getAttribute('transform');
-    if(!tr||tr.indexOf('translate')<0) return;
-    if(!g.querySelector('circle,text,ellipse,use')) return;
-    if(tagged.has(g)) return;
-    tagged.add(g);
-    g.setAttribute('data-posi-id','grp-'+i);
+  // Make sure pointer events work on the overlay
+  svg.style.pointerEvents='all';
+
+  var badges=svg.querySelectorAll('.ov-badge, [class*="ov-badge"]');
+
+  // Fallback: if no .ov-badge class found, look for <g> groups with circles containing numbers 1-32
+  if(badges.length===0){
+    badges=Array.from(svg.querySelectorAll('g')).filter(function(g){
+      var t=g.querySelector('text');
+      return t&&t.textContent.trim().match(/^\\d{1,2}$/)&&g.querySelector('circle');
+    });
+  }
+
+  badges.forEach(function(g){
     g.style.cursor='grab';
-    glowEl(g,'#c084fc',false);
-    count++;
-    // Mark children so they know they belong to a group
-    g.querySelectorAll('circle,text,ellipse,use,path').forEach(function(c){tagged.add(c);});
+    idleGlow(g);
+    // Prevent text selection inside
+    g.style.userSelect='none';
+    g.style.webkitUserSelect='none';
   });
 
-  // Priority 2: Remaining <circle> elements not inside a tagged group
-  document.querySelectorAll('circle').forEach(function(el,i){
-    if(tagged.has(el)) return;
-    tagged.add(el);
-    el.setAttribute('data-posi-id','cir-'+i);
-    el.style.cursor='grab';
-    glowEl(el,'#38bdf8',false);
-    count++;
-  });
-
-  // Priority 3: SVG <text> number labels
-  document.querySelectorAll('text').forEach(function(el,i){
-    if(tagged.has(el)) return;
-    var t=el.textContent.trim();
-    if(!t.match(/^\\d{1,2}$/)) return;
-    tagged.add(el);
-    el.setAttribute('data-posi-id','txt-'+i);
-    el.style.cursor='grab';
-    glowEl(el,'#fbbf24',false);
-    count++;
-  });
-
-  // Priority 4: Absolutely positioned HTML elements with tooth/number classes
-  document.querySelectorAll('[class*="tooth"],[class*="number"],[class*="marker"],[class*="pin"],[class*="dot"],[class*="indicator"]').forEach(function(el,i){
-    if(tagged.has(el)||isSvg(el)) return;
-    tagged.add(el);
-    el.setAttribute('data-posi-id','cls-'+i);
-    el.style.cursor='grab';
-    glowEl(el,'#4ade80',false);
-    count++;
-  });
-
-  // Block native browser drag and text selection
+  // Block native drag
   document.addEventListener('dragstart',function(e){e.preventDefault();},true);
   document.body.style.userSelect='none';
   document.body.style.webkitUserSelect='none';
 
-  window.parent.postMessage({action:'count',count:count},'*');
+  window.parent.postMessage({action:'count',count:badges.length},'*');
 }
 
-/* ── MOUSEDOWN ── */
+// ── Hit test: which badge did we click? ──
+// Uses elementsFromPoint and then walks up to find .ov-badge <g>
+function findBadge(clientX, clientY){
+  var els;
+  try{els=Array.from(document.elementsFromPoint(clientX,clientY));}
+  catch(e){els=[document.elementFromPoint(clientX,clientY)];}
+
+  for(var i=0;i<els.length;i++){
+    var el=els[i];
+    // Walk up to find a <g> with a circle child
+    for(var n=el;n&&n!==document.documentElement;n=n.parentNode){
+      if(n.nodeName&&n.nodeName.toLowerCase()==='g'&&n.querySelector('circle')&&n.querySelector('text')){
+        var t=n.querySelector('text');
+        if(t&&t.textContent.trim().match(/^\\d{1,2}$/)){
+          return n;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+// ── MOUSEDOWN ──
 document.addEventListener('mousedown',function(e){
-  if(!dragMode) return;
+  if(!dm)return;
+  var g=findBadge(e.clientX,e.clientY);
+  if(!g)return;
 
-  // Use elementsFromPoint to get ALL layers at click position
-  var stack=[];
-  try{ stack=Array.from(document.elementsFromPoint(e.clientX,e.clientY)); }
-  catch(ex){ stack=[e.target]; }
-
-  // Find best draggable from the stack
-  var target=null;
-  // First: look for any <g transform="translate"> in the stack
-  for(var i=0;i<stack.length;i++){
-    var el=stack[i];
-    if(el.nodeName&&el.nodeName.toLowerCase()==='g'){
-      var tr=el.getAttribute('transform');
-      if(tr&&tr.indexOf('translate')>-1&&el.querySelector('circle,text,ellipse,use')){
-        target={el:el,type:'smart-group'};
-        break;
-      }
-    }
-    // or a tagged ancestor group
-    if(el.getAttribute&&el.getAttribute('data-posi-id')&&el.nodeName.toLowerCase()==='g'){
-      target={el:el,type:'smart-group'};
-      break;
-    }
-  }
-  // Second: if no group found, look for any tagged element
-  if(!target){
-    for(var i=0;i<stack.length;i++){
-      if(stack[i].getAttribute&&stack[i].getAttribute('data-posi-id')){
-        var el=stack[i]; var id=el.getAttribute('data-posi-id');
-        if(id.startsWith('cir')) target={el:el,type:'circle-solo'};
-        else if(id.startsWith('txt')) target={el:el,type:'text-solo'};
-        else if(id.startsWith('cls')) target={el:el,type:'html-el'};
-        break;
-      }
-    }
-  }
-  // Third: smart walk-up from e.target
-  if(!target) target=smartTarget(e.target);
-  if(!target||!target.el) return;
-
-  e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+  e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
 
   // Deselect previous
-  if(selEl&&selEl!==target.el){ unGlow(selEl); glowEl(selEl,selEl._posiColor||'#c084fc',false); }
-  selEl=target.el;
-  target.el._posiColor=target.type==='html-el'?'#4ade80':target.type.includes('circle')?'#38bdf8':target.type==='text-solo'?'#fbbf24':'#c084fc';
-  glowEl(target.el,target.el._posiColor,true);
-  target.el.style.cursor='grabbing';
+  if(selG&&selG!==g)unGlow(selG);
+  selG=g;
+  glow(g,true);
+  g.style.cursor='grabbing';
 
-  dragging=target;
+  var svg=getOverlaySVG();
+  var sp=toSVG(svg,e.clientX,e.clientY);
+  startSVG={x:sp.x,y:sp.y};
 
-  // Capture start values
-  var svg=rootSVG(target.el);
-  if(target.type==='smart-group'||target.type==='text-solo'){
-    if(svg){
-      var sp=svgCoords(svg,e.clientX,e.clientY);
-      startMouse={x:sp.x,y:sp.y,mode:'svg',svg:svg};
-    }else{
-      startMouse={x:e.clientX,y:e.clientY,mode:'screen'};
-    }
-    var tr=target.el.getAttribute('transform')||'';
-    startVal=parseTr(tr);
-  }else if(target.type==='circle-solo'){
-    if(svg){
-      var sp=svgCoords(svg,e.clientX,e.clientY);
-      startMouse={x:sp.x,y:sp.y,mode:'svg',svg:svg};
-    }else{
-      startMouse={x:e.clientX,y:e.clientY,mode:'screen'};
-    }
-    startVal={cx:parseFloat(target.el.getAttribute('cx')||0), cy:parseFloat(target.el.getAttribute('cy')||0)};
-  }else{
-    startMouse={x:e.clientX,y:e.clientY,mode:'screen'};
-    var cs=window.getComputedStyle(target.el);
-    startVal={left:parseFloat(cs.left)||0, top:parseFloat(cs.top)||0};
-  }
+  // Capture current circle cx/cy
+  var circ=g.querySelector('circle');
+  startCircle={cx:parseFloat(circ.getAttribute('cx')||0), cy:parseFloat(circ.getAttribute('cy')||0)};
 
-  // Tell parent what's selected
-  var info={type:target.type,id:target.el.getAttribute('data-posi-id')||'(untagged)',tag:target.el.nodeName};
-  if(target.type==='smart-group')  info.transform=target.el.getAttribute('transform');
-  else if(target.type==='circle-solo'){info.cx=target.el.getAttribute('cx');info.cy=target.el.getAttribute('cy');}
-  else if(target.type==='text-solo'){info.transform=target.el.getAttribute('transform');info.text=target.el.textContent.trim();}
-  else{info.left=target.el.style.left;info.top=target.el.style.top;}
-  window.parent.postMessage({action:'select',info:info},'*');
+  drag={g:g,svg:svg};
 
+  // Tell parent
+  var n=g.getAttribute('data-n')||g.querySelector('text').textContent.trim();
+  window.parent.postMessage({action:'select',n:n,cx:startCircle.cx,cy:startCircle.cy},'*');
 },true);
 
-/* ── MOUSEMOVE ── */
+// ── MOUSEMOVE ──
 document.addEventListener('mousemove',function(e){
-  if(!dragging) return;
-  e.preventDefault(); e.stopPropagation();
-  var t=dragging.type, el=dragging.el;
+  if(!drag)return;
+  e.preventDefault();e.stopPropagation();
 
-  if(t==='smart-group'||t==='text-solo'){
-    var cur;
-    if(startMouse.mode==='svg'&&startMouse.svg){
-      cur=svgCoords(startMouse.svg,e.clientX,e.clientY);
-    }else{
-      // Fallback: compute SVG delta in screen px → SVG units
-      var svg2=rootSVG(el);
-      if(svg2){
-        var cur0=svgCoords(svg2,e.clientX,e.clientY);
-        var base=svgCoords(svg2,startMouse.x,startMouse.y);
-        cur={x:startVal.x+(cur0.x-base.x), y:startVal.y+(cur0.y-base.y)};
-        var nx=r2(cur.x), ny=r2(cur.y);
-        var oldTr=el.getAttribute('transform')||'';
-        var newTr=oldTr.replace(/translate\\s*\\([^)]+\\)/,'translate('+nx+','+ny+')');
-        if(newTr===oldTr) newTr='translate('+nx+','+ny+')';
-        el.setAttribute('transform',newTr);
-        return;
-      }
-      cur={x:startVal.x+(e.clientX-startMouse.x), y:startVal.y+(e.clientY-startMouse.y)};
-    }
-    var nx=r2(startVal.x+(cur.x-startMouse.x));
-    var ny=r2(startVal.y+(cur.y-startMouse.y));
-    var oldTr=el.getAttribute('transform')||'';
-    var newTr=oldTr.replace(/translate\\s*\\([^)]+\\)/,'translate('+nx+','+ny+')');
-    if(newTr===oldTr) newTr='translate('+nx+','+ny+')';
-    el.setAttribute('transform',newTr);
+  var cur=toSVG(drag.svg,e.clientX,e.clientY);
+  var dx=cur.x-startSVG.x;
+  var dy=cur.y-startSVG.y;
+  var newCX=r1(startCircle.cx+dx);
+  var newCY=r1(startCircle.cy+dy);
 
-  }else if(t==='circle-solo'){
-    var cur;
-    if(startMouse.mode==='svg'&&startMouse.svg){
-      cur=svgCoords(startMouse.svg,e.clientX,e.clientY);
-      el.setAttribute('cx',r2(startVal.cx+(cur.x-startMouse.x)));
-      el.setAttribute('cy',r2(startVal.cy+(cur.y-startMouse.y)));
-    }else{
-      var svg3=rootSVG(el);
-      if(svg3){
-        var cur3=svgCoords(svg3,e.clientX,e.clientY);
-        var base3=svgCoords(svg3,startMouse.x,startMouse.y);
-        el.setAttribute('cx',r2(startVal.cx+(cur3.x-base3.x)));
-        el.setAttribute('cy',r2(startVal.cy+(cur3.y-base3.y)));
-      }
-    }
-  }else{
-    el.style.left=r2(startVal.left+(e.clientX-startMouse.x))+'px';
-    el.style.top =r2(startVal.top +(e.clientY-startMouse.y))+'px';
+  // Move circle
+  var circ=drag.g.querySelector('circle');
+  circ.setAttribute('cx',newCX);
+  circ.setAttribute('cy',newCY);
+
+  // Move text — offset from circle by same original offset
+  var txt=drag.g.querySelector('text');
+  if(txt){
+    var origTxtX=parseFloat(txt.getAttribute('x')||0);
+    var origTxtY=parseFloat(txt.getAttribute('y')||0);
+    var offX=origTxtX-startCircle.cx;  // preserve original text offset
+    var offY=origTxtY-startCircle.cy;
+    txt.setAttribute('x',r1(newCX+offX));
+    txt.setAttribute('y',r1(newCY+offY));
   }
+
+  window.parent.postMessage({action:'moving',cx:newCX,cy:newCY},'*');
 },true);
 
-/* ── MOUSEUP ── */
+// ── MOUSEUP ──
 document.addEventListener('mouseup',function(e){
-  if(!dragging) return;
-  var t=dragging.type, el=dragging.el;
-  el.style.cursor='grab';
-  glowEl(el,el._posiColor||'#c084fc',true); // stay highlighted
+  if(!drag)return;
+  var g=drag.g;
+  g.style.cursor='grab';
 
-  var newVals={};
-  if(t==='smart-group'||t==='text-solo') newVals={transform:el.getAttribute('transform')};
-  else if(t==='circle-solo') newVals={cx:el.getAttribute('cx'),cy:el.getAttribute('cy')};
-  else newVals={left:el.style.left,top:el.style.top};
+  var circ=g.querySelector('circle');
+  var newCX=parseFloat(circ.getAttribute('cx'));
+  var newCY=parseFloat(circ.getAttribute('cy'));
+  var n=g.getAttribute('data-n')||g.querySelector('text').textContent.trim();
 
   window.parent.postMessage({
-    action:'change',
-    id:el.getAttribute('data-posi-id')||('unknown-'+Date.now()),
-    type:t,tag:el.nodeName,
-    oldVals:JSON.parse(JSON.stringify(startVal)),
-    newVals:newVals
+    action:'changed',n:n,
+    oldCX:startCircle.cx,oldCY:startCircle.cy,
+    newCX:newCX,newCY:newCY
   },'*');
-  dragging=null;
+  drag=null;
 },true);
 
-/* ── MESSAGES FROM PARENT ── */
+// ── MESSAGES ──
 window.addEventListener('message',function(e){
-  if(!e.data) return;
+  if(!e.data)return;
   var d=e.data;
 
-  if(d.action==='setDragMode'){
-    dragMode=d.value;
-    document.querySelectorAll('[data-posi-id],[style*="cursor"]').forEach(function(el){
-      if(!el.getAttribute('data-posi-id')) return;
-      if(dragMode){ el.style.cursor='grab'; glowEl(el,el._posiColor||'#c084fc',false); }
-      else{ el.style.cursor=''; unGlow(el); }
+  if(d.action==='setMode'){
+    dm=d.val;
+    var svg=getOverlaySVG();
+    if(!svg)return;
+    var badges=svg.querySelectorAll('.ov-badge,[class*="ov-badge"]');
+    if(badges.length===0) badges=Array.from(svg.querySelectorAll('g')).filter(function(g){var t=g.querySelector('text');return t&&t.textContent.trim().match(/^\\d{1,2}$/)&&g.querySelector('circle');});
+    badges.forEach(function(g){
+      if(dm){g.style.cursor='grab';idleGlow(g);}
+      else{g.style.cursor='';unGlow(g);}
     });
   }
 
-  if(d.action==='undo'&&d.id){
-    var el=document.querySelector('[data-posi-id="'+d.id+'"]');
-    if(!el) return;
-    var ov=d.oldVals, t=d.type;
-    if(t==='smart-group'||t==='text-solo'){ el.setAttribute('transform',ov.raw||''); }
-    else if(t==='circle-solo'){ el.setAttribute('cx',ov.cx); el.setAttribute('cy',ov.cy); }
-    else{ el.style.left=ov.left+'px'; el.style.top=ov.top+'px'; }
-    glowEl(el,el._posiColor||'#c084fc',false);
+  if(d.action==='undo'&&d.n!==undefined){
+    var svg=getOverlaySVG();
+    if(!svg)return;
+    var target=null;
+    var badges=svg.querySelectorAll('.ov-badge,[class*="ov-badge"]');
+    if(badges.length===0) badges=Array.from(svg.querySelectorAll('g')).filter(function(g){var t=g.querySelector('text');return t&&t.textContent.trim().match(/^\\d{1,2}$/)&&g.querySelector('circle');});
+    badges.forEach(function(g){if((g.getAttribute('data-n')||g.querySelector('text').textContent.trim())===String(d.n))target=g;});
+    if(!target)return;
+    var circ=target.querySelector('circle');
+    var txt=target.querySelector('text');
+    var offX=parseFloat(txt.getAttribute('x'))-parseFloat(circ.getAttribute('cx'));
+    var offY=parseFloat(txt.getAttribute('y'))-parseFloat(circ.getAttribute('cy'));
+    circ.setAttribute('cx',d.oldCX);circ.setAttribute('cy',d.oldCY);
+    txt.setAttribute('x',r1(d.oldCX+offX));txt.setAttribute('y',r1(d.oldCY+offY));
+    unGlow(target);idleGlow(target);
+    if(selG===target)selG=null;
   }
 
-  if(d.action==='exportHTML'){
-    // Clean all editor markup
-    document.querySelectorAll('[data-posi-id]').forEach(function(el){
-      el.removeAttribute('data-posi-id');
-      el.style.cursor='';
-      unGlow(el);
-    });
-    document.querySelectorAll('script').forEach(function(s){
-      if(s.textContent&&s.textContent.indexOf('data-posi-id')>-1) s.remove();
-    });
-    document.body.style.userSelect='';
-    document.body.style.webkitUserSelect='';
-    window.parent.postMessage({action:'fullHTML',html:document.documentElement.outerHTML},'*');
+  if(d.action==='export'){
+    // Remove editor styles from badges
+    var svg=getOverlaySVG();
+    if(svg){
+      var badges=svg.querySelectorAll('.ov-badge,[class*="ov-badge"]');
+      if(badges.length===0) badges=Array.from(svg.querySelectorAll('g')).filter(function(g){var t=g.querySelector('text');return t&&t.textContent.trim().match(/^\\d{1,2}$/)&&g.querySelector('circle');});
+      badges.forEach(function(g){g.style.cursor='';unGlow(g);g.style.userSelect='';g.style.webkitUserSelect='';});
+    }
+    document.body.style.userSelect='';document.body.style.webkitUserSelect='';
+    // Remove this injected script
+    var s=document.getElementById('posiedit-script');if(s)s.remove();
+    window.parent.postMessage({action:'html',html:document.documentElement.outerHTML},'*');
   }
 });
 
-// Init
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',function(){setTimeout(setup,500);});
-}else{ setTimeout(setup,600); }
-
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){setTimeout(setup,600);});}
+else{setTimeout(setup,700);}
 })();
 <\/script>`;
 }
 
-// ─── LOAD EDITOR ─────────────────────────────────────────────────────────────
+// ─── LOAD ────────────────────────────────────────────────────────────────────
 function loadEditor(){
   const code=document.getElementById('code-input').value.trim();
-  if(!code){toast('Please paste your HTML code first!','red');return;}
-  originalCode=code; changes={};
+  if(!code){toast('Paste your HTML first!','red');return;}
+  originalCode=code;changes={};
   document.getElementById('paste-screen').style.display='none';
   const es=document.getElementById('editor-screen');
-  es.style.display='flex'; es.classList.add('active');
-  document.getElementById('btn-reset').style.display='';
-  document.getElementById('btn-undo').style.display='';
-  document.getElementById('btn-copy').style.display='';
+  es.style.display='flex';es.classList.add('active');
+  ['btn-reset','btn-undo','btn-copy'].forEach(id=>document.getElementById(id).style.display='');
   document.getElementById('status-text').textContent='Loading…';
   renderPreview();
 }
@@ -560,90 +442,107 @@ function loadEditor(){
 function renderPreview(){
   const iframe=document.getElementById('preview-iframe');
   let html=originalCode;
-  const script=getDragScript();
-  if(html.includes('</body>')) html=html.replace(/<\/body>/i,script+'</body>');
-  else html+=script;
+  const s=getDragScript();
+  if(html.includes('</body>')) html=html.replace(/<\/body>/i,s+'</body>');
+  else html+=s;
   const blob=new Blob([html],{type:'text/html'});
   iframe.src=URL.createObjectURL(blob);
   iframe.onload=()=>{
     try{
       const h=iframe.contentDocument?.body?.scrollHeight;
-      if(h) iframe.style.height=Math.max(h+40,600)+'px';
-    }catch(e){iframe.style.height='800px';}
-    document.getElementById('status-text').textContent='Ready — click any glowing element and drag';
+      if(h) iframe.style.height=Math.max(h+40,500)+'px';
+    }catch(e){iframe.style.height='700px';}
+    document.getElementById('status-text').textContent='Ready — click a numbered circle, then drag';
   };
 }
 
-// ─── MESSAGES FROM IFRAME ────────────────────────────────────────────────────
+// ─── MESSAGES ────────────────────────────────────────────────────────────────
+let currentSel=null;
+
 window.addEventListener('message',e=>{
-  const d=e.data; if(!d||!d.action) return;
+  const d=e.data; if(!d||!d.action)return;
 
   if(d.action==='count'){
-    document.getElementById('drag-count').textContent=d.count+' draggable';
-    document.getElementById('status-text').textContent=d.count+' groups/elements — click a glowing circle to drag';
-    toast('✓ '+d.count+' tooth markers detected','blue');
+    if(d.error){
+      document.getElementById('badge-count').textContent='⚠ '+d.error;
+      toast('Could not find overlay SVG — check structure','red');
+    }else{
+      document.getElementById('badge-count').textContent=d.count+' badges';
+      document.getElementById('status-text').textContent=d.count+' tooth badges ready — click any number to drag';
+      if(d.count>0) toast('✓ '+d.count+' tooth badges detected!','blue');
+      else toast('No .ov-badge groups found — check your code','red');
+    }
   }
 
   if(d.action==='select'){
-    const i=d.info;
-    let html='';
-    const isSmart=i.type==='smart-group';
-    if(isSmart) html+=`<div class="smart-badge">⭐ SMART GROUP — moves all layers</div>`;
-    html+=row('Type',i.type); html+=row('Tag',`&lt;${i.tag}&gt;`);
-    if(i.transform) html+=row('translate',shorten(i.transform,32));
-    if(i.cx!=null){html+=row('cx',i.cx);html+=row('cy',i.cy);}
-    if(i.text) html+=row('text',i.text);
-    if(i.left!=null){html+=row('left',i.left);html+=row('top',i.top);}
-    document.getElementById('selected-info').innerHTML=html;
+    currentSel=d;
+    document.getElementById('sel-info').innerHTML=`
+      <div class="sel-box">
+        <div class="sel-title"><span class="sel-badge">Tooth #${d.n}</span></div>
+        ${row('cx',d.cx)} ${row('cy',d.cy)}
+        <div style="margin-top:6px;font-size:11px;color:var(--muted)">Drag to reposition</div>
+      </div>`;
   }
 
-  if(d.action==='change'){ changes[d.id]=d; updateChanges(); }
+  if(d.action==='moving'&&currentSel){
+    document.getElementById('sel-info').innerHTML=`
+      <div class="sel-box">
+        <div class="sel-title"><span class="sel-badge">Tooth #${currentSel.n}</span> <span style="color:var(--green);font-size:9px;">● DRAGGING</span></div>
+        ${row('cx',d.cx)} ${row('cy',d.cy)}
+      </div>`;
+  }
 
-  if(d.action==='fullHTML'){
-    navigator.clipboard.writeText(d.html).then(()=>{
+  if(d.action==='changed'){
+    changes[d.n]={n:d.n,oldCX:d.oldCX,oldCY:d.oldCY,newCX:d.newCX,newCY:d.newCY};
+    updateChanges();
+    document.getElementById('sel-info').innerHTML=`
+      <div class="sel-box">
+        <div class="sel-title"><span class="sel-badge">Tooth #${d.n}</span> <span style="color:var(--green);font-size:9px;">✓ MOVED</span></div>
+        ${row('cx',d.newCX)} ${row('cy',d.newCY)}
+        <div style="margin-top:4px;font-size:10px;color:var(--muted)">was: cx=${d.oldCX} cy=${d.oldCY}</div>
+      </div>`;
+  }
+
+  if(d.action==='html'){
+    const out=d.html;
+    navigator.clipboard.writeText(out).then(()=>{
       toast('✓ Fixed code copied to clipboard!','green');
     }).catch(()=>{
       const ta=document.createElement('textarea');
-      ta.value=d.html; document.body.appendChild(ta); ta.select();
-      document.execCommand('copy'); ta.remove();
+      ta.value=out;document.body.appendChild(ta);ta.select();
+      document.execCommand('copy');ta.remove();
       toast('✓ Copied (fallback)','green');
     });
   }
 });
 
-function row(l,v){return `<div class="info-row"><span class="lbl">${l}</span><span class="val mono">${v}</span></div>`;}
-function shorten(s,n){return s&&s.length>n?s.substring(0,n)+'…':s;}
+function row(l,v){return `<div class="irow"><span class="il">${l}</span><span class="iv">${v}</span></div>`;}
 
 // ─── CHANGES ─────────────────────────────────────────────────────────────────
 function updateChanges(){
   const keys=Object.keys(changes);
-  document.getElementById('changes-count').textContent=keys.length?`(${keys.length})`:'';
-  const badge=document.getElementById('change-badge');
-  badge.style.display=keys.length?'':'none';
-  badge.textContent=keys.length+' change'+(keys.length!==1?'s':'');
+  document.getElementById('chg-count').textContent=keys.length?`(${keys.length})`:'';
+  const b=document.getElementById('chg-badge');
+  b.style.display=keys.length?'':'none';
+  b.textContent=keys.length+' change'+(keys.length!==1?'s':'');
   if(!keys.length){
-    document.getElementById('changes-list').innerHTML='<div class="empty-msg">No changes yet.</div>';
-    return;
+    document.getElementById('chg-list').innerHTML='<div class="empty-msg">No changes yet.</div>';return;
   }
-  document.getElementById('changes-list').innerHTML=keys.map(k=>{
+  document.getElementById('chg-list').innerHTML=keys.map(k=>{
     const c=changes[k];
-    let val='';
-    if(c.type==='smart-group'||c.type==='text-solo') val=shorten(c.newVals.transform,36);
-    else if(c.type==='circle-solo') val=`cx:${c.newVals.cx}  cy:${c.newVals.cy}`;
-    else val=`left:${c.newVals.left} top:${c.newVals.top}`;
-    return `<div class="change-item" onclick="undoChange('${k}')">
-      <div class="c-id">${k}</div>
-      <div class="c-val">${val||''}</div>
-      <div class="c-hint">↩ click to undo</div>
+    return `<div class="chg-item" onclick="undoChange('${k}')">
+      <div class="ci">Tooth #${c.n}</div>
+      <div class="cv">cx:${c.newCX} cy:${c.newCY}</div>
+      <div class="ch">was cx:${c.oldCX} cy:${c.oldCY} · click to undo</div>
     </div>`;
   }).join('');
 }
 
-function undoChange(id){
-  if(!changes[id]) return;
-  document.getElementById('preview-iframe').contentWindow.postMessage({action:'undo',id,oldVals:changes[id].oldVals,type:changes[id].type},'*');
-  delete changes[id]; updateChanges();
-  toast('↩ Change undone','blue');
+function undoChange(n){
+  if(!changes[n])return;
+  document.getElementById('preview-iframe').contentWindow.postMessage({action:'undo',n:parseInt(n),oldCX:changes[n].oldCX,oldCY:changes[n].oldCY},'*');
+  delete changes[n];updateChanges();
+  toast('↩ Tooth #'+n+' reset','blue');
 }
 function undoLast(){
   const keys=Object.keys(changes);
@@ -651,34 +550,31 @@ function undoLast(){
   undoChange(keys[keys.length-1]);
 }
 
-// ─── COPY / TOGGLE / ZOOM / RESET ────────────────────────────────────────────
-function copyCode(){ document.getElementById('preview-iframe').contentWindow.postMessage({action:'exportHTML'},'*'); }
+function copyCode(){document.getElementById('preview-iframe').contentWindow.postMessage({action:'export'},'*');}
 
 function toggleMode(){
-  dragMode=!dragMode;
+  dragModeOn=!dragModeOn;
   const btn=document.getElementById('mode-btn');
-  btn.textContent=dragMode?'● ON':'○ OFF';
-  btn.className='mode-toggle'+(dragMode?'':' off');
-  document.getElementById('preview-iframe').contentWindow.postMessage({action:'setDragMode',value:dragMode},'*');
-  document.getElementById('status-text').textContent=dragMode?'Drag mode active':'Preview mode';
+  btn.textContent=dragModeOn?'● DRAG ON':'○ DRAG OFF';
+  btn.className='tbadge '+(dragModeOn?'tbadge-green':'tbadge-blue');
+  document.getElementById('preview-iframe').contentWindow.postMessage({action:'setMode',val:dragModeOn},'*');
 }
 
-function setZoom(val){
-  document.getElementById('zoom-label').textContent=val+'%';
-  const outer=document.getElementById('scale-outer');
-  outer.style.transform=`scale(${val/100})`;
-  outer.style.transformOrigin='top left';
+function setZoom(v){
+  document.getElementById('zoom-label').textContent=v+'%';
+  const o=document.getElementById('scale-outer');
+  o.style.transform=`scale(${v/100})`;o.style.transformOrigin='top left';
 }
 
 function resetTool(){
-  if(Object.keys(changes).length&&!confirm('Discard changes?')) return;
-  changes={}; originalCode='';
+  if(Object.keys(changes).length&&!confirm('Discard changes and start over?'))return;
+  changes={};originalCode='';
   document.getElementById('code-input').value='';
   document.getElementById('paste-screen').style.display='';
   const es=document.getElementById('editor-screen');
-  es.style.display='none'; es.classList.remove('active');
+  es.style.display='none';es.classList.remove('active');
   ['btn-reset','btn-undo','btn-copy'].forEach(id=>document.getElementById(id).style.display='none');
-  document.getElementById('status-text').textContent='Paste HTML → Start Editing';
+  document.getElementById('status-text').textContent='Paste your tooth chart HTML';
   updateChanges();
 }
 </script>
